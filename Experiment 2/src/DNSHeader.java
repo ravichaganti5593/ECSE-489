@@ -8,14 +8,14 @@ import java.util.*;
 public class DNSHeader {
 	
 	public static final int sizeOfHeader = 12;
-	private ByteBuffer HeaderNode = ByteBuffer.allocate(sizeOfHeader);
+	private ByteBuffer PacketHeader = ByteBuffer.allocate(sizeOfHeader);
 	
-	private byte QR;				//Query/Response Flag
-	private byte Opcode;			//Operation Code
-	private byte AA;				//Authoritative Answer Flag
-	private byte TC;				//Truncation Flag
-	private byte RD;				//Recursion Desired
-	private byte RA;				//Recursion Available
+	private byte QR;			//Query/Response Flag
+	private byte Opcode;		//Operation Code
+	private byte AA;			//Authoritative Answer Flag
+	private byte TC;			//Truncation Flag
+	private byte RD;			//Recursion Desired
+	private byte RA;			//Recursion Available
 	private byte Z;				//Zero
 	private byte RCode;			//RCode
 	
@@ -44,22 +44,22 @@ public class DNSHeader {
 		NSCount = (short) 0;
 		ARCount = (short) 0;
 		
-		HeaderNode.putShort(ID);
+		PacketHeader.putShort(ID);
 		
 		//convert 2nd layer of DNS Header into 16 bit type (short)
 		short conversion = (short) (QR << 15 | Opcode << 11 | AA << 10 | TC << 9 | 
 									RD << 8 | RA << 7 | Z << 4 | RCode);
 		
-		HeaderNode.putShort(conversion);
-		HeaderNode.putShort(QDCount);
-		HeaderNode.putShort(ANCount);
-		HeaderNode.putShort(NSCount);
-		HeaderNode.putShort(ARCount);
+		PacketHeader.putShort(conversion);
+		PacketHeader.putShort(QDCount);
+		PacketHeader.putShort(ANCount);
+		PacketHeader.putShort(NSCount);
+		PacketHeader.putShort(ARCount);
 	}
 
-	
-	public ByteBuffer GetHeaderNode() {
-		return HeaderNode;
+	 
+	public ByteBuffer GetPacketHeader() {
+		return PacketHeader;
 	}
 
 	
