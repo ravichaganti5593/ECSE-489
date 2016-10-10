@@ -1,76 +1,55 @@
 import java.io.UnsupportedEncodingException;
 import java.nio.*;
-import java.nio.charset.Charset;
 import java.util.*;
 
 
 public class DNSQuestion {
 	
-	public ArrayList<Byte> QNAME;
+	public ByteBuffer QNAME;
 	public short QTYPE;
 	public static final short QCLASS = 0x0001;
+	//byte[] qname;
+	
 	public ByteBuffer Question;
 	
 	public DNSQuestion (String QNAME, String QTYPE) {
 		this.QNAME = convertQNAME(QNAME);
 		this.QTYPE = checkQTYPE(QTYPE);
-		this.Question = createQuestion();
+		this.Question = generateQuestion();
 
-	}
+	}	
 	
-	public ArrayList<Byte> convertQNAME(String QNAME) {
-		ArrayList<Byte> result = new ArrayList<Byte>();
-		String[] array = QNAME.split(".");
+	public ByteBuffer convertQNAME(String QNAME) {
 		
-		for (String i: array) {
+		String[] splitArray = QNAME.split("\\.");
+		int sizeOfBytes = 0;
+		
+		for (String i: splitArray) {
+			sizeOfBytes = sizeOfBytes + 1 + i.length();	
+		}
+		
+		sizeOfBytes += 1;	//for the last one byte as 0
+		
+		ByteBuffer result = ByteBuffer.allocate(sizeOfBytes);
+		
+		for (String i: splitArray) {
+			result.put((byte) i.length());
+			
 			try {
-				byte[] arrayOfBytes = i.getBytes("UTF-8");
-				result.add((byte) arrayOfBytes.length);
-				for (byte j: arrayOfBytes) {
-					result.add(j);
-				}
-			} 
+				result.put(i.getBytes("UTF-8"));
+			}
 			
 			catch (UnsupportedEncodingException exception) {
-				System.out.println("Error in UTF-8 format : " + exception);
+				System.out.println("Error in format of UTF-8 --> " + exception);
 			}
 		}
 		
-		result.add((byte) 0);
+		result.put((byte) 0x00);
 		return result;
+		
 	}
 	
-	
-//	public ByteBuffer convertQNAME(String QNAME) {
-//		
-//		String[] splitArray = QNAME.split(".");
-//		int sizeOfBytes = 0;
-//		
-//		for (String i: splitArray) {
-//			sizeOfBytes = sizeOfBytes + 1 + i.length();		
-//		}
-//		
-//		sizeOfBytes += 1;	//for the last one byte as 0
-//		
-//		ByteBuffer result = ByteBuffer.allocate(sizeOfBytes);
-//		
-//		for (String i: splitArray) {
-//			
-//			try {
-//				result.put(i.getBytes(Charset.forName("UTF-8")));
-//			}
-//			
-//			catch (Exception exception) {
-//				System.out.println("Error in format of UTF-8 --> " + exception);
-//			}
-//		}
-//		
-//		result.put((byte) 0x00);
-//		return result;
-//		
-//	}
-	
-	
+			
 	public short checkQTYPE (String QTYPE) {
 		
 		if (QTYPE.equals('A')) {		//send query for IP address
@@ -86,28 +65,19 @@ public class DNSQuestion {
 		}
 		
 		else {
-			return 0x1;					//default, doesn't matter (what about CName??)
+			return 0x1;					
 		}
 	}
 	
 	
-	public ByteBuffer createQuestion() {
-		ArrayList<Byte> result = new ArrayList<Byte>(QNAME);
+	public ByteBuffer generateQuestion() {
 		
-		//add QTYPE to question
-		result.add((byte) 0);
-		result.add((byte) QTYPE);
-		
-		//add QCLASS to question
-		result.add((byte) 0);
-		result.add((byte) 1);
-		
-		ByteBuffer resultQuestion = ByteBuffer.allocate(result.size());
-		
-		for (Byte bytes: result) {
-			resultQuestion.put(bytes);
-		}
-		
+		int sizeOfBuffer = QNAME.array().length + (byte) 2;
+		ByteBuffer resultQuestion = ByteBuffer.allocate(sizeOfBuffer);
+		resultQuestion.put(QNAME);
+		resultQuestion.putShort(QTYPE);
+		resultQuestion.putShort(QCLASS);
+
 		return resultQuestion;
 		
 	}
@@ -115,6 +85,38 @@ public class DNSQuestion {
 	
 	public ByteBuffer GetQuestion() {
 		return Question;
+	}
+	
+	public static void main (String[] args) {
+		DNSQuestion class1 = new DNSQuestion("www.mcgill.ca", "A");
+		System.out.println(class1.getNameBytes("www.mcgill.ca"));
+		System.out.println(class1.QNAME);
+		
+	}
+	
+	private ByteBuffer getNameBytes(String n){
+		
+		String[] split = n.split("[.]");
+		int numLabels = split.length;
+		int numCharacters = 0;
+		
+		for (String i : split){
+			numCharacters += i.length();
+		}
+		
+		int size = numLabels + numCharacters;
+		
+		ByteBuffer buffer = ByteBuffer.allocate(size+1);
+		for (String i : split){
+			buffer.put((byte) i.length());
+			try {
+				buffer.put(i.getBytes("UTF-8"));
+			} catch (UnsupportedEncodingException e) {
+				System.out.println("This is an unsupported encoding");
+			}
+		}
+		buffer.put((byte) 0x00);
+		return buffer;
 	}
 	
 }
