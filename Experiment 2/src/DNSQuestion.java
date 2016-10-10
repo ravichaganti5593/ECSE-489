@@ -1,20 +1,50 @@
+import java.nio.*;
+import java.nio.charset.Charset;
+import java.util.*;
+
 
 public class DNSQuestion {
 	
-	public byte[] QNAME;
+	public ByteBuffer QNAME;
 	public short QTYPE;
-	public String QCLASS;
+	public static final short QCLASS = 0x0001;
+	public ByteBuffer Question;
 	
 	public DNSQuestion (String QNAME, String QTYPE) {
 		this.QNAME = convertQNAME(QNAME);
 		this.QTYPE = checkQTYPE(QTYPE);
+		this.Question = createQuestion();
 
 	}
 	
 	
-	public byte[] convertQNAME(String QNAME) {
-		byte[] answer = new byte[3];
-		return answer;
+	public ByteBuffer convertQNAME(String QNAME) {
+		
+		String[] splitArray = QNAME.split(".");
+		int sizeOfBytes = 0;
+		
+		for (String i: splitArray) {
+			sizeOfBytes = sizeOfBytes + 1 + i.length();		
+		}
+		
+		sizeOfBytes += 1;	//for the last one byte as 0
+		
+		ByteBuffer result = ByteBuffer.allocate(sizeOfBytes);
+		
+		for (String i: splitArray) {
+			
+			try {
+				result.put(i.getBytes(Charset.forName("UTF-8")));
+			}
+			
+			catch (Exception exception) {
+				System.out.println("Error in format of UTF-8 --> " + exception);
+			}
+		}
+		
+		result.put((byte) 0x00);
+		return result;
+		
 	}
 	
 	public short checkQTYPE (String QTYPE) {
@@ -34,6 +64,14 @@ public class DNSQuestion {
 		else {
 			return 0x1;					//default, doesn't matter (what about CName??)
 		}
+	}
+	
+	public ByteBuffer createQuestion() {
+		
+	}
+	
+	public ByteBuffer GetQuestion() {
+		return Question;
 	}
 	
 }

@@ -22,7 +22,7 @@ public class DNSClient {
 	
 	
 	public void start (String[] args) {
-		
+		//implement sockets
 	}
 	
 }
