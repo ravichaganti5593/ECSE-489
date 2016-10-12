@@ -46,7 +46,7 @@ public class DNSQuestion {
 		
 		result.put((byte) 0x00);
 		return result;
-		
+
 	}
 	
 			
