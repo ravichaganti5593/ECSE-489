@@ -162,8 +162,6 @@ public class DNSClient {
 		}
 		
 		System.out.println("Response received after " + RTT + " milliseconds ("	+ connectionRetries + " retries)");
-		System.out.println("***Answer  Section  (" + numAnswers	+ "  records)***");
-		
 	}
 	
 	
