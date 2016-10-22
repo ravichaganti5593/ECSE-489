@@ -30,12 +30,9 @@ public class DNSClient {
 		client.start(args);
 		
 	}
-	
-	
-	
+
 	public void start (String[] args) {
-		//implement sockets
-		System.out.println("Executing program");
+
 		verifyAndValidateInput(args);
 		createSocketConnection();
 		outputBehavior();
@@ -134,12 +131,14 @@ public class DNSClient {
 			System.exit(1);
 		}
 		//check if response is a response 
-		if (getBit(8,dataReceived[2]) != 1){
+		
+		if (((byte) ((dataReceived[2] >> 8) & 1)) != 1) {
 			System.out.println("ERROR: Unexpected Response: Response packet is a request");
 			System.exit(1);
 		}
+		
 		//check if server supports recursive queries
-		if (getBit(8, dataReceived[3]) != 1){
+		if (((byte) ((dataReceived[3] >> 8) & 1)) != 1){
 			System.out.println("ERROR: Server does not support recursive queries");
 			System.exit(1);
 		}

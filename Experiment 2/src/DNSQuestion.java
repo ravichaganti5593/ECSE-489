@@ -84,37 +84,5 @@ public class DNSQuestion {
 	
 	public ByteBuffer GetQuestion() {
 		return Question;
-	}
-	
-	public static void main (String[] args) {
-		DNSQuestion class1 = new DNSQuestion("www.mcgill.ca", "A");
-		System.out.println(class1.getNameBytes("www.mcgill.ca"));
-		
-	}
-	
-	private ByteBuffer getNameBytes(String n){
-		
-		String[] split = n.split("[.]");
-		int numLabels = split.length;
-		int numCharacters = 0;
-		
-		for (String i : split){
-			numCharacters += i.length();
-		}
-		
-		int size = numLabels + numCharacters;
-		
-		ByteBuffer buffer = ByteBuffer.allocate(size+1);
-		for (String i : split){
-			buffer.put((byte) i.length());
-			try {
-				buffer.put(i.getBytes("UTF-8"));
-			} catch (UnsupportedEncodingException e) {
-				System.out.println("This is an unsupported encoding");
-			}
-		}
-		buffer.put((byte) 0x00);
-		return buffer;
-	}
-	
+	}	
 }

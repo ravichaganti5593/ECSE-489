@@ -10,20 +10,20 @@ public class DNSHeader {
 	public static final int sizeOfHeader = 12;
 	private ByteBuffer PacketHeader = ByteBuffer.allocate(sizeOfHeader);
 	
-	private byte QR;			//Query/Response Flag
-	private byte Opcode;		//Operation Code
-	private byte AA;			//Authoritative Answer Flag
-	private byte TC;			//Truncation Flag
-	private byte RD;			//Recursion Desired
-	private byte RA;			//Recursion Available
-	private byte Z;				//Zero
-	private byte RCode;			//RCode
+	byte QR;			//Query/Response Flag
+	byte Opcode;		//Operation Code
+	byte AA;			//Authoritative Answer Flag
+	byte TC;			//Truncation Flag
+	byte RD;			//Recursion Desired
+	byte RA;			//Recursion Available
+	byte Z;				//Zero
+	byte RCode;			//RCode
 	
-	private short ID;			//Identifier
-	private short QDCount;		//Question count
-	private short ANCount;		//Answer record count
-	private short NSCount;		//Authority record count
-	private short ARCount;		//Additional record count
+	short ID;			//Identifier
+	short QDCount;		//Question count
+	short ANCount;		//Answer record count
+	short NSCount;		//Authority record count
+	short ARCount;		//Additional record count
 	
 	
 	public DNSHeader () {
@@ -46,14 +46,7 @@ public class DNSHeader {
 		
 		PacketHeader.putShort(ID);
 		
-		//convert 2nd layer of DNS Header into 16 bit type (short)
 		short conversion = (short) (QR << 15 | Opcode << 11 | AA << 10 | TC << 9 | RD << 8 | RA << 7 | Z << 4 | RCode);
-		
-//		byte toRD = (byte) (QR << 7 | Opcode << 3 | AA << 2 | TC << 1 | RD);  	
-//		byte toRcode = (byte) (RA << 7 | Z << 4 | RCode);
-//		
-//		PacketHeader.put(toRD);
-//		PacketHeader.put(toRcode);
 		
 		PacketHeader.putShort(conversion);
 		PacketHeader.putShort(QDCount);
@@ -66,59 +59,5 @@ public class DNSHeader {
 	public ByteBuffer GetPacketHeader() {
 		return PacketHeader;
 	}
-
-	
-	public byte GetQR() {
-		return QR;
-	}
-	
-	public byte GetOpcode () {
-		return Opcode;
-	}
-	
-	public byte GetAA() {
-		return AA;
-	}
-	
-	public byte GetTC() {
-		return TC;
-	}
-	
-	public byte GetRD() {
-		return RD;
-	}
-	
-	public byte GetRA() {
-		return RA;
-	}
-	
-	public byte GetZ() {
-		return Z;
-	}
-	
-	public byte GetRCode() {
-		return RCode;
-	}
-	
-	public short GetID() {
-		return ID;
-	}
-	
-	public short GetQDCount() {
-		return QDCount;
-	}
-	
-	public short GetANCount() {
-		return ANCount;
-	}
-	
-	public short GetNSCount() {
-		return NSCount;
-	}
-	
-	public short GetARCount() {
-		return ARCount;
-	}
-		
 	
 }
