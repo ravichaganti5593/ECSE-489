@@ -15,6 +15,14 @@ public class DNSClient {
 	byte[] serverIPAddressBytes = new byte[4];
 
 	
+	DatagramPacket DNSReceivePacket;
+	ByteBuffer headerBuffer;
+	ByteBuffer questionBuffer;
+	ByteBuffer answerBuffer;
+	ByteBuffer packetBuffer;
+	long RTT = 0;
+	int connectionRetries = 0;
+	
 	final static int MAXIMUM_PORTS = 49151;
 	
 	public static void main (String[] args) throws Exception {
@@ -38,19 +46,20 @@ public class DNSClient {
 		
 		verifyAndValidateInput(args);
 		createSocketConnection();
+		outputBehavior();
 
 	}
 	
 	public void createSocketConnection() {
 		
 		DNSHeader DNSHeader = new DNSHeader();	
-		ByteBuffer headerBuffer = DNSHeader.GetPacketHeader();
+		headerBuffer = DNSHeader.GetPacketHeader();
 		
 		DNSQuestion DNSQuestion = new DNSQuestion(DOMAIN, TYPE);
-		ByteBuffer questionBuffer = DNSQuestion.GetQuestion();
+		questionBuffer = DNSQuestion.GetQuestion();
 		
-		ByteBuffer answerBuffer = ByteBuffer.allocate(512 - headerBuffer.capacity() - questionBuffer.capacity());
-		ByteBuffer packetBuffer = ByteBuffer.allocate(headerBuffer.capacity() + questionBuffer.capacity() + answerBuffer.capacity());
+		answerBuffer = ByteBuffer.allocate(512 - headerBuffer.capacity() - questionBuffer.capacity());
+		packetBuffer = ByteBuffer.allocate(headerBuffer.capacity() + questionBuffer.capacity() + answerBuffer.capacity());
 		
 		packetBuffer.put(headerBuffer.array());
 		packetBuffer.put(questionBuffer.array());
@@ -77,21 +86,91 @@ public class DNSClient {
 			System.out.println("Socket exception " + exception);
 		}
 		
-		int connectionRetries = 0;
+
 		Exception socketTimeOut = new Exception();
-		DatagramPacket DNSReceivePacket = new DatagramPacket(packetBuffer.array(), packetBuffer.array().length);
-		
-		long RTT = 0;
+		DNSReceivePacket = new DatagramPacket(packetBuffer.array(), packetBuffer.array().length);	
 		byte[] sendData = packetBuffer.array();
-		DatagramPacket DNSPacket = new DatagramPacket(sendData, sendData.length, serverIPAddress, DNSPORTNUMBER);
+		DatagramPacket DNSSendPacket = new DatagramPacket(sendData, sendData.length, serverIPAddress, DNSPORTNUMBER);
 		
 		do {
+			try {
+				DNSSocket.send(DNSSendPacket);
+			} 
 			
+			catch (IOException exception) {
+				System.out.println("ERROR: Could not send packet");
+			}
+			
+			try {
+				long startTime = System.currentTimeMillis();
+				DNSSocket.receive(DNSReceivePacket);
+				long endTime = System.currentTimeMillis();
+				RTT = endTime - startTime;
+			}
+			
+			catch (IOException exception) {
+				socketTimeOut = exception;
+				connectionRetries++;
+				
+				if (connectionRetries == MAXRETRIES) {
+					System.out.println("ERROR: maximum number of retries");
+					System.exit(1);
+				}
+			}	
 		}
 		
 		while (socketTimeOut instanceof SocketTimeoutException && connectionRetries < MAXRETRIES);
+		
+		DNSSocket.close();
 	}
 	
+	
+	public void outputBehavior() {
+		byte[] dataReceived = DNSReceivePacket.getData();
+		int answerIndex = headerBuffer.capacity() + questionBuffer.capacity();
+		byte[] receivedAnswer = Arrays.copyOfRange(dataReceived, answerIndex, dataReceived.length);
+		byte[] answerFromType = Arrays.copyOfRange(receivedAnswer, 2, dataReceived.length);
+		
+		//int numAnswers = dataReceived.getData() << 8 | dataReceived.getData()[7];
+		
+		System.out.println("DnsClient sending request for " + DOMAIN);
+		System.out.println("Server: " + SERVERIPADDRESS);
+		System.out.println("Request type: " + TYPE);
+		
+		if (dataReceived[1]  != headerBuffer.get(1) || dataReceived[0] != headerBuffer.get(0) ) {
+			System.out.println("ERROR: Unexpected Response: Request and response IDs don't match" );
+			System.exit(1);
+		}
+		//check if response is a response 
+		if (getBit(8,dataReceived[2]) != 1){
+			System.out.println("ERROR: Unexpected Response: Response packet is a request");
+			System.exit(1);
+		}
+		//check if server supports recursive queries
+		if (getBit(8, dataReceived[3]) != 1){
+			System.out.println("ERROR: Server does not support recursive queries");
+			System.exit(1);
+		}
+		//check if there is an error condition
+		byte rcode = (byte)(dataReceived[3] << 4);
+		if (rcode == 1) {
+			System.out.println("ERROR: the name server was unable to interpret the query");
+			System.exit(1);
+		}
+		else if (rcode == 2) {
+			System.out.println("ERROR: the name server was unable to interpret the query");
+		}
+		
+		System.out.println("Response received after " + RTT + " milliseconds ("	+ connectionRetries + " retries)");
+		System.out.println("***Answer  Section  (" + numAnswers	+ "  records)***");
+		
+	}
+	
+	
+	
+	public byte getBit(int position, byte b) {
+	   return (byte) ((b >> position) & 1);
+	}
 	
 	public void verifyAndValidateInput(String[] args) {
 		
