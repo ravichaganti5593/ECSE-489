@@ -1,6 +1,7 @@
 import java.util.*;
 import java.net.*;
 import java.io.*;
+import java.nio.*;
 
 
 public class DNSClient {
@@ -9,13 +10,13 @@ public class DNSClient {
 	int MAXRETRIES = 3;
 	int PORTNUMBER = 53;
 	String TYPE = "A";
-	String SERVER = "";
+	String IPADDRESS = "";
 	String DOMAIN = "";
 	
 	final static int MAXIMUM_PORTS = 49151;
 	
 	public static void main (String[] args) throws Exception {
-		
+		 
 		try {
 			 DNSClient DNSClient = new DNSClient();
 			 DNSClient.start(args);
@@ -34,8 +35,38 @@ public class DNSClient {
 		//implement sockets
 		
 		verifyAndValidateInput(args);
-		
+		createSocketConnection();
 
+	}
+	
+	public void createSocketConnection() {
+		
+		DNSHeader DNSHeader = new DNSHeader();	
+		ByteBuffer headerBuffer = DNSHeader.GetPacketHeader();
+		
+		DNSQuestion DNSQuestion = new DNSQuestion(DOMAIN, TYPE);
+		ByteBuffer questionBuffer = DNSQuestion.GetQuestion();
+		
+		ByteBuffer answerBuffer = ByteBuffer.allocate(512 - headerBuffer.capacity() - questionBuffer.capacity());
+		ByteBuffer packetBuffer = ByteBuffer.allocate(headerBuffer.capacity() + questionBuffer.capacity() + answerBuffer.capacity());
+		
+		packetBuffer.put(headerBuffer.array());
+		packetBuffer.put(questionBuffer.array());
+		packetBuffer.put(answerBuffer.array());
+		
+		InetAddress serverIPAddress = null;
+		
+		try {
+			serverIPAddress = InetAddress.getByAddress(addr);
+		}
+		
+		catch (UnknownHostException e) {
+			System.out.println(e);
+		}
+		
+		
+		
+		
 	}
 	
 	
@@ -108,8 +139,8 @@ public class DNSClient {
 			}
 			
 			else if (args[i].charAt(0) == '@') {
-				SERVER = args[i].substring(1);
-				if (!checkValidServer(SERVER)) {
+				IPADDRESS = args[i].substring(1);
+				if (!checkValidIPAddress(IPADDRESS)) {
 					System.out.println("Invalid input: IP address is not a valid input");
 					System.exit(1);
 				}
@@ -124,13 +155,13 @@ public class DNSClient {
 		
 	}
 	
-	public boolean checkValidServer (String SERVER) {
+	public boolean checkValidIPAddress (String IPAddress) {
 		try {
-	        if (SERVER == null || SERVER.isEmpty()) {
+	        if (IPAddress == null || IPAddress.isEmpty()) {
 	            return false;
 	        }
 
-	        String[] parts = SERVER.split( "\\." );
+	        String[] parts = IPAddress.split( "\\." );
 	        if ( parts.length != 4 ) {
 	            return false;
 	        }
@@ -141,7 +172,7 @@ public class DNSClient {
 	                return false;
 	            }
 	        }
-	        if (SERVER.endsWith(".") ) {
+	        if (IPAddress.endsWith(".") ) {
 	            return false;
 	        }
 
