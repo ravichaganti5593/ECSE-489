@@ -5,15 +5,14 @@ import java.util.*;
 
 public class DNSQuestion {
 	
-	public ByteBuffer QNAME;
 	public short QTYPE;
-	public static final short QCLASS = 0x0001;
-	//byte[] qname;
+	public static final short QCLASS = (short) 0x0001;
+	byte[] qname;
 	
 	public ByteBuffer Question;
 	
 	public DNSQuestion (String QNAME, String QTYPE) {
-		this.QNAME = convertQNAME(QNAME);
+		this.qname = convertQNAME(QNAME).array();
 		this.QTYPE = checkQTYPE(QTYPE);
 		this.Question = generateQuestion();
 
@@ -21,7 +20,7 @@ public class DNSQuestion {
 	
 	public ByteBuffer convertQNAME(String QNAME) {
 		
-		String[] splitArray = QNAME.split("\\.");
+		String[] splitArray = QNAME.split("[.]");
 		int sizeOfBytes = 0;
 		
 		for (String i: splitArray) {
@@ -52,7 +51,7 @@ public class DNSQuestion {
 			
 	public short checkQTYPE (String QTYPE) {
 		
-		if (QTYPE.equals('A')) {		//send query for IP address
+		if (QTYPE.equals("A")) {		//send query for IP address
 			return 0x1;
 		}
 		
@@ -72,9 +71,9 @@ public class DNSQuestion {
 	
 	public ByteBuffer generateQuestion() {
 		
-		int sizeOfBuffer = QNAME.array().length + (byte) 2;
+		int sizeOfBuffer = qname.length + 2*Short.BYTES;
 		ByteBuffer resultQuestion = ByteBuffer.allocate(sizeOfBuffer);
-		resultQuestion.put(QNAME);
+		resultQuestion.put(qname);
 		resultQuestion.putShort(QTYPE);
 		resultQuestion.putShort(QCLASS);
 
@@ -90,7 +89,6 @@ public class DNSQuestion {
 	public static void main (String[] args) {
 		DNSQuestion class1 = new DNSQuestion("www.mcgill.ca", "A");
 		System.out.println(class1.getNameBytes("www.mcgill.ca"));
-		System.out.println(class1.QNAME);
 		
 	}
 	

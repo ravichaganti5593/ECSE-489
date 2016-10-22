@@ -25,17 +25,9 @@ public class DNSClient {
 	
 	final static int MAXIMUM_PORTS = 49151;
 	
-	public static void main (String[] args) throws Exception {
-		 
-		try {
-			 DNSClient DNSClient = new DNSClient();
-			 DNSClient.start(args);
-		} 
-		
-		catch (Exception exception) {
-			System.out.println("DNSClient start exception is " + exception);
-			return;
-		}
+	public static void main (String[] args) {
+		DNSClient client = new DNSClient();
+		client.start(args);
 		
 	}
 	
@@ -43,7 +35,7 @@ public class DNSClient {
 	
 	public void start (String[] args) {
 		//implement sockets
-		
+		System.out.println("Executing program");
 		verifyAndValidateInput(args);
 		createSocketConnection();
 		outputBehavior();
@@ -131,7 +123,7 @@ public class DNSClient {
 		byte[] receivedAnswer = Arrays.copyOfRange(dataReceived, answerIndex, dataReceived.length);
 		byte[] answerFromType = Arrays.copyOfRange(receivedAnswer, 2, dataReceived.length);
 		
-		//int numAnswers = dataReceived.getData() << 8 | dataReceived.getData()[7];
+		int numAnswers = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
 		
 		System.out.println("DnsClient sending request for " + DOMAIN);
 		System.out.println("Server: " + SERVERIPADDRESS);
@@ -162,6 +154,7 @@ public class DNSClient {
 		}
 		
 		System.out.println("Response received after " + RTT + " milliseconds ("	+ connectionRetries + " retries)");
+		System.out.println("***Answer  Section  (" + numAnswers + "  records)***");
 	}
 	
 	
@@ -173,13 +166,14 @@ public class DNSClient {
 	public void verifyAndValidateInput(String[] args) {
 		
 		if (args.length < 2) {
-			System.out.println("Invalid input: Need to enter at least 2 arguments");		
+			System.out.println("Invalid input: Need to enter at least 2 arguments");
+			System.exit(1);
 		}	
 		
 		for (int i = 0; i < args.length; i++) {
 			if (args[i].equals("-t")) {
 				try {
-					TIMEOUT = Integer.parseInt(args[++i]);
+					TIMEOUT = Integer.parseInt(args[i + 1].trim());
 					
 					if (TIMEOUT < 0) {
 						System.out.println("Invalid input: 'TIMEOUT' value must be greater than 0");
@@ -189,6 +183,7 @@ public class DNSClient {
 				
 				catch (NumberFormatException ex) {
                     throw new IllegalArgumentException("Invalid input: 'TIMEOUT' value must be a number");
+                    
 				}
 				
 				i++;
@@ -196,10 +191,10 @@ public class DNSClient {
 			
 			else if (args[i].equals("-r")) {
 				try {
-					MAXRETRIES = Integer.parseInt(args[++i]);
+					MAXRETRIES = Integer.parseInt(args[i + 1].trim());
 					
 					if (MAXRETRIES < 0) {
-						System.out.println("Invalid input: 'TIMEOUT' value must be greater than 0");
+						System.out.println("Invalid input: 'MAXRETRIES' value must be greater than 0");
 						System.exit(1);
 					}
 				}
@@ -214,27 +209,27 @@ public class DNSClient {
 			
 			else if (args[i].equals("-p")) {
 				try {
-					DNSPORTNUMBER = Integer.parseInt(args[++i]);
+					DNSPORTNUMBER = Integer.parseInt(args[i + 1].trim());
 					
 					if (DNSPORTNUMBER < 1 || DNSPORTNUMBER > MAXIMUM_PORTS) {
-						System.out.println("Invalid input: 'TIMEOUT' value must be greater than 0");
+						System.out.println("Invalid input: 'PORT' value must be greater than 0");
 						System.exit(1);
 					}
 				}
 				
 				catch (NumberFormatException ex) {
-                    throw new IllegalArgumentException("Invalid input: 'MAXRETRIES' value must be a number");
+                    throw new IllegalArgumentException("Invalid input: 'PORT' value must be a number");
                     					
 				}
 				
 				i++;
 			}
 			
-			else if (args[i].equals("mx")) {
+			else if (args[i].equals("-mx")) {
 				TYPE = "MX";
 			}
 			
-			else if (args[i].equals("ns")) {
+			else if (args[i].equals("-nx")) {
 				TYPE = "NS";
 			}
 			

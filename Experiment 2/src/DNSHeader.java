@@ -28,27 +28,32 @@ public class DNSHeader {
 	
 	public DNSHeader () {
 		
-		QR = (byte) 0;
-		Opcode = (byte) 0;
-		AA = (byte) 0;
-		TC = (byte) 0;
-		RD = (byte) 1;
-		RA = (byte) 0;
-		Z = (byte) 0;
-		RCode = (byte) 0;
+		QR = 0x0;
+		Opcode = 0x0;
+		AA = 0x0;
+		TC = 0x0;
+		RD = 0x1;
+		RA = 0x0;
+		Z = 0x0;
+		RCode = 0x0;
 		
 		Random random = new Random();
 		ID = (short) random.nextInt(Short.MAX_VALUE + 1);
-		QDCount = (short) 1;
-		ANCount = (short) 0;
-		NSCount = (short) 0;
-		ARCount = (short) 0;
+		QDCount = 0x1;
+		ANCount = 0x0;
+		NSCount = 0x0;
+		ARCount = 0x0;
 		
 		PacketHeader.putShort(ID);
 		
 		//convert 2nd layer of DNS Header into 16 bit type (short)
-		short conversion = (short) (QR << 15 | Opcode << 11 | AA << 10 | TC << 9 | 
-									RD << 8 | RA << 7 | Z << 4 | RCode);
+		short conversion = (short) (QR << 15 | Opcode << 11 | AA << 10 | TC << 9 | RD << 8 | RA << 7 | Z << 4 | RCode);
+		
+//		byte toRD = (byte) (QR << 7 | Opcode << 3 | AA << 2 | TC << 1 | RD);  	
+//		byte toRcode = (byte) (RA << 7 | Z << 4 | RCode);
+//		
+//		PacketHeader.put(toRD);
+//		PacketHeader.put(toRcode);
 		
 		PacketHeader.putShort(conversion);
 		PacketHeader.putShort(QDCount);
