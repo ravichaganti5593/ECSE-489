@@ -156,12 +156,6 @@ public class DNSClient {
 		System.out.println("***Answer  Section  (" + numAnswers + "  records)***");
 	}
 	
-	
-	
-	public byte getBit(int position, byte b) {
-	   return (byte) ((b >> position) & 1);
-	}
-	
 	public void verifyAndValidateInput(String[] args) {
 		
 		if (args.length < 2) {
