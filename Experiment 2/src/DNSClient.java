@@ -8,10 +8,12 @@ public class DNSClient {
 
 	int TIMEOUT = 5;
 	int MAXRETRIES = 3;
-	int PORTNUMBER = 53;
+	int DNSPORTNUMBER = 53;
 	String TYPE = "A";
-	String IPADDRESS = "";
+	String SERVERIPADDRESS = "";
 	String DOMAIN = "";
+	byte[] serverIPAddressBytes = new byte[4];
+
 	
 	final static int MAXIMUM_PORTS = 49151;
 	
@@ -23,7 +25,7 @@ public class DNSClient {
 		} 
 		
 		catch (Exception exception) {
-			System.out.println("Error is " + exception);
+			System.out.println("DNSClient start exception is " + exception);
 			return;
 		}
 		
@@ -57,16 +59,37 @@ public class DNSClient {
 		InetAddress serverIPAddress = null;
 		
 		try {
-			serverIPAddress = InetAddress.getByAddress(addr);
+			serverIPAddress = InetAddress.getByAddress(serverIPAddressBytes);		
 		}
 		
-		catch (UnknownHostException e) {
-			System.out.println(e);
+		catch (UnknownHostException exception) {
+			System.out.println("Unknown host error: " + exception);
 		}
 		
+		DatagramSocket DNSSocket = null;
 		
+		try {
+			DNSSocket = new DatagramSocket();
+			DNSSocket.setSoTimeout(1000 * TIMEOUT);
+		}
 		
+		catch (SocketException exception) {
+			System.out.println("Socket exception " + exception);
+		}
 		
+		int connectionRetries = 0;
+		Exception socketTimeOut = new Exception();
+		DatagramPacket DNSReceivePacket = new DatagramPacket(packetBuffer.array(), packetBuffer.array().length);
+		
+		long RTT = 0;
+		byte[] sendData = packetBuffer.array();
+		DatagramPacket DNSPacket = new DatagramPacket(sendData, sendData.length, serverIPAddress, DNSPORTNUMBER);
+		
+		do {
+			
+		}
+		
+		while (socketTimeOut instanceof SocketTimeoutException && connectionRetries < MAXRETRIES);
 	}
 	
 	
@@ -114,9 +137,9 @@ public class DNSClient {
 			
 			else if (args[i].equals("-p")) {
 				try {
-					PORTNUMBER = Integer.parseInt(args[++i]);
+					DNSPORTNUMBER = Integer.parseInt(args[++i]);
 					
-					if (PORTNUMBER < 1 || PORTNUMBER > MAXIMUM_PORTS) {
+					if (DNSPORTNUMBER < 1 || DNSPORTNUMBER > MAXIMUM_PORTS) {
 						System.out.println("Invalid input: 'TIMEOUT' value must be greater than 0");
 						System.exit(1);
 					}
@@ -139,10 +162,35 @@ public class DNSClient {
 			}
 			
 			else if (args[i].charAt(0) == '@') {
-				IPADDRESS = args[i].substring(1);
-				if (!checkValidIPAddress(IPADDRESS)) {
+				SERVERIPADDRESS = args[i].substring(1);
+				if (!checkValidIPAddress(SERVERIPADDRESS)) {
 					System.out.println("Invalid input: IP address is not a valid input");
 					System.exit(1);
+				}
+				
+				else {
+					//get bytes from server IP address
+					int indexOfByte = 0;
+					int startIndex = 0;
+					
+					for (int j = 0; j < SERVERIPADDRESS.length(); j++) {
+						if (SERVERIPADDRESS.charAt(j) == '.' || j == SERVERIPADDRESS.length() - 1) {
+							String subIPAddress;
+							
+							if (SERVERIPADDRESS.charAt(j) == '.') {
+								subIPAddress = SERVERIPADDRESS.substring(startIndex, j);
+							}
+							
+							else {
+								subIPAddress = SERVERIPADDRESS.substring(startIndex);
+							}
+							
+							serverIPAddressBytes[indexOfByte] = (byte) Integer.parseInt(subIPAddress);
+							indexOfByte++;
+							startIndex = j + 1;
+						}
+					}
+					
 				}
 				
 			}
