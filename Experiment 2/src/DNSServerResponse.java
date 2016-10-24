@@ -7,9 +7,6 @@ import java.util.Arrays;
 
 public class DNSServerResponse {
 	
-	
-	//****************		//print additional records as well!!!******************
-	
 	DatagramPacket DNSReceivePacket;
 	ByteBuffer headerBuffer;
 	ByteBuffer questionBuffer;
@@ -49,22 +46,22 @@ public class DNSServerResponse {
 		
 		//check ID
 		if (dataReceived[1]  != headerBuffer.get(1) || dataReceived[0] != headerBuffer.get(0) ) {
-			System.out.println("ERROR: Unexpected Response: Request and response IDs don't match" );
+			System.out.println("ERROR: IDs mismatch for request and response." );
 			System.exit(1);
 		}
 		
 		//check QR
 		if (((byte) ((dataReceived[2] >> 8) & 1)) != 1) {
-			System.out.println("ERROR: Unexpected Response: Response packet is a request");
+			System.out.println("ERROR: Response packet is not response but request.");
 			System.exit(1);
 		}
 		
 		//check RA for recursive queries
 		if (((byte) ((dataReceived[3] >> 8) & 1)) != 1){
-			System.out.println("ERROR: Server does not support recursive queries");
+			System.out.println("ERROR: Cannot have queries that are recursive");
 			System.exit(1);
 		}
-		
+		 
 		//Check for RCode error types
 		byte RCode = (byte)(dataReceived[3] << 4);
 		
@@ -93,23 +90,28 @@ public class DNSServerResponse {
 		System.out.println("Response received after " + RTT + " milliseconds ("	+ connectionRetries + " retries)");
 		
 		//Check ANCount
-		int numAnswers = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
-		System.out.println("***Answer  Section  (" + numAnswers + "  records)***");
+		int answerRecords = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
+		System.out.println("***Answer  Section  (" + answerRecords + "  records)***");
 		
 		int nextAnswerIndex = 0;
 		int currentAnswerIndex = 0;
-		for (int i = 0; i < numAnswers; i++) {
-			//CHANGE THIS ******************* to +10 and + 9
-			short RDLength = (short) ((receivedAnswer[(nextAnswerIndex + 12) - 2] << 8) | (receivedAnswer[(nextAnswerIndex + 12) - 1])); 
+		for (int i = 0; i < answerRecords; i++) {
+			short RDLength = (short) ((receivedAnswer[nextAnswerIndex + 10] << 8) | (receivedAnswer[nextAnswerIndex + 11])); 
 																													
 			currentAnswerIndex = nextAnswerIndex;
-			nextAnswerIndex += (12 + RDLength);
+			nextAnswerIndex = nextAnswerIndex + (12 + RDLength);
 			
 			byte authorityBit = (byte) (dataReceived[3] & 0x4);		//check with AA data and 4 octets
 			boolean isAuthority = authorityBit == 4 ? true : false;
 			 
-			DNSRecords(Arrays.copyOfRange(receivedAnswer, currentAnswerIndex, nextAnswerIndex), RDLength, isAuthority);
+			DNSRecords(Arrays.copyOfRange(receivedAnswer, currentAnswerIndex, nextAnswerIndex), RDLength, isAuthority);		
+			
 		}
+		
+		//print additional records
+		int additionalRecords = DNSReceivePacket.getData()[10] << 8 | DNSReceivePacket.getData()[11];
+		System.out.println("***Additional Section (" + additionalRecords + " records)***");
+		
 			
 	}
 	
@@ -133,15 +135,15 @@ public class DNSServerResponse {
 		}
 		
 		else if (Type == 0x0002) {	//TYPE: "NS"
-			TypeNS();
+			TypeNS(data, startIndex, RDLength, TTL, authorityValue);
 		}
 		
 		else if (Type == 0x000f) {	//TYPE: "MX"
-			TypeMX();
+			TypeMX(data, startIndex, RDLength, TTL, authorityValue);
 		}
 		
 		else if (Type == 0x0005) {	//TYPE: "CNAME"
-			TypeCNAME();
+			TypeCNAME(data, startIndex, RDLength, TTL, authorityValue);
 		}
 	}
 	
@@ -162,21 +164,135 @@ public class DNSServerResponse {
 			System.out.println("Error: Unknown host exception ->" + exception);
 		}
 		
-		System.out.println("IP	" + address.getHostAddress() + "	" + TTL + "	" + authorityValue);
+		System.out.println("IP	" + address.getHostAddress() + "	" + TTL + "	" + authorityValue); 
 	}
 	
 	
 	//for Type NS: name of the server specified using the same format as the QNAME field
-	public void TypeNS() {
-		//to do
+	public void TypeNS(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+
+		ByteBuffer buffer = ByteBuffer.allocate(RDLength);
+		int bufferSize = buffer.array().length;
+		for (byte b : Arrays.copyOfRange(data, startIndex, data.length)) {
+			buffer.put(b);
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		for (int i = 0; i < bufferSize; i++) {
+			char[] subDomain = new char[buffer.array()[i++]];
+			for (int j = 0; j < subDomain.length; j++) {
+				subDomain[j] = (char) buffer.array()[i++];
+			}
+			sb.append(subDomain);
+			
+			if (i < bufferSize - 1) {
+				sb.append(".");
+			}
+			i--;
+		}
+
+		String fullDomain = sb.toString();
+		
+		if (data[0] == 0xc0) {		//for offset
+			int pointer = data[1];
+			int offset = pointer - 12;
+			String secondName = DOMAIN.substring(offset);
+			String nameServer = fullDomain + secondName;
+			System.out.println("NS	" + nameServer + "	" + TTL + "	" + authorityValue);
+		} 
+		
+		else {
+			System.out.println("NS	" + fullDomain + "	" + TTL + "	"	+ authorityValue);
+		}
 	}
 	
-	public void TypeMX() {
-		//to do
+	public void TypeMX(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+		short preference = (short) (data[12] << 8 | data[13]);
+
+		ByteBuffer buffer = ByteBuffer.allocate(RDLength - 2);
+		StringBuilder builder = new StringBuilder();
+
+		for (byte b : Arrays.copyOfRange(data, startIndex + 2, data.length)) {
+			buffer.put(b);
+		}
+
+		for (int i = 0; i < buffer.array().length; i++) {
+			if (buffer.array()[i] == 0) {
+				break;
+			}
+			char[] chars = new char[buffer.array()[i++]];
+			for (int j = 0; j < chars.length; j++) {
+				chars[j] = (char) buffer.array()[i++];
+			}
+			builder.append(chars);
+			
+			if (i < buffer.array().length - 1) {
+				builder.append(".");
+			}
+			i--;
+		}
+		
+		
+		String first = builder.toString();
+		if (data[data.length - 2] == 0xc0) {
+			int pointer = data[data.length - 1];
+			int offset = pointer - 12;
+
+			
+			String secondName = DOMAIN.substring(offset);
+			String mx = (first.concat(secondName));
+			System.out.println("MX	" + mx + "	" + preference + "	" + TTL
+					+ "	" + authorityValue);
+		} 
+		
+		else {
+			first = builder.toString();
+			System.out.println("MX	" + first + "	" + preference + "	" + TTL
+					+ "	" + authorityValue);
+		}
 	}
 	
-	public void TypeCNAME() {
-		//to do
+	public void TypeCNAME(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+		
+		if (data[startIndex] == 0xc0) {
+			int pointer = data[startIndex + 1];
+			int offset = pointer - 12;
+			String cname = DOMAIN.substring(offset);
+			System.out.println("CNAME	" + cname + "	" + TTL + "	"	+ authorityValue);
+		} 
+		
+		else {
+			ByteBuffer buffer = ByteBuffer.allocate(RDLength);
+			StringBuilder builder = new StringBuilder();
+
+			for (byte b : Arrays.copyOfRange(data, startIndex, data.length - 1)) {	//-1 to get rid of 0 in the end
+				if (String.format("%02X", b).equals("C0")) {
+					break;
+				}
+				buffer.put(b);
+			}
+			
+			for (int i = 0; i < buffer.array().length - 2; i++) {
+				if (buffer.array()[i] == 0) {
+					break;
+				}
+				char[] chars = new char[buffer.array()[i++]];
+				for (int j = 0; j < chars.length; j++) {
+					chars[j] = (char) buffer.array()[i++];
+				}
+				
+				builder.append(chars);
+				
+				if (i < buffer.array().length - 1) {
+					builder.append(".");
+				}
+				i--;
+			}
+			String cname = builder.toString();
+
+			System.out.println("CNAME	" + cname + "	" + TTL + "	" + authorityValue);
+		}
 	}
 	
 }
