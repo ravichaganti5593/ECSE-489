@@ -1,4 +1,6 @@
 import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -94,5 +96,87 @@ public class DNSServerResponse {
 		int numAnswers = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
 		System.out.println("***Answer  Section  (" + numAnswers + "  records)***");
 		
+		int nextAnswerIndex = 0;
+		int currentAnswerIndex = 0;
+		for (int i = 0; i < numAnswers; i++) {
+			//CHANGE THIS ******************* to +10 and + 9
+			short RDLength = (short) ((receivedAnswer[(nextAnswerIndex + 12) - 2] << 8) | (receivedAnswer[(nextAnswerIndex + 12) - 1])); 
+																													
+			currentAnswerIndex = nextAnswerIndex;
+			nextAnswerIndex += (12 + RDLength);
+			
+			byte authorityBit = (byte) (dataReceived[3] & 0x4);		//check with AA data and 4 octets
+			boolean isAuthority = authorityBit == 4 ? true : false;
+			 
+			DNSRecords(Arrays.copyOfRange(receivedAnswer, currentAnswerIndex, nextAnswerIndex), RDLength, isAuthority);
+		}
+			
 	}
+	
+	public void DNSRecords(byte[] data, int RDLength, boolean authority) {
+		
+		//retrieve values from response for Type, Class, TTL, and RDLength
+		short Type = (short) (data[2] << 8 | data[3]);
+		short Class = (short) (data[4] << 4 | data[5]);
+		int TTL = data[6] << 24 | data[7] << 16 | data[8] << 8 | data[9];
+		String authorityValue = authority ? "auth" : "nonauth";
+		
+		if (Class != 0x0001) {
+			System.out.println("Error: CLASS value is not 0x0001");
+			System.exit(1);
+		}
+		
+		int startIndex = 12; //bytes up to rdata
+		
+		if (Type == 0x0001) {		//TYPE: "A", 		
+			TypeA(data, startIndex, RDLength, TTL, authorityValue);
+		}
+		
+		else if (Type == 0x0002) {	//TYPE: "NS"
+			TypeNS();
+		}
+		
+		else if (Type == 0x000f) {	//TYPE: "MX"
+			TypeMX();
+		}
+		
+		else if (Type == 0x0005) {	//TYPE: "CNAME"
+			TypeCNAME();
+		}
+	}
+	
+	
+	//for Type A: for an A (IP address) record, then RDATA is the IP address (four octets)
+	public void TypeA(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+		ByteBuffer IPAddress = ByteBuffer.allocate(4); //RDATA has IP address in 4 octets
+		for (int i = startIndex; i < startIndex + RDLength; i++) {		//need to understand this part
+			IPAddress.put(data[i]);
+		}
+		
+		InetAddress address = null;
+		try {
+			address = InetAddress.getByAddress(IPAddress.array());
+		}
+		
+		catch (UnknownHostException exception) {
+			System.out.println("Error: Unknown host exception ->" + exception);
+		}
+		
+		System.out.println("IP	" + address.getHostAddress() + "	" + TTL + "	" + authorityValue);
+	}
+	
+	
+	//for Type NS: name of the server specified using the same format as the QNAME field
+	public void TypeNS() {
+		//to do
+	}
+	
+	public void TypeMX() {
+		//to do
+	}
+	
+	public void TypeCNAME() {
+		//to do
+	}
+	
 }
