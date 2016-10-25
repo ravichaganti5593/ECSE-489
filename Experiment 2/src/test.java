@@ -128,10 +128,10 @@ public class test {
 	}
 	
 	//------------------------------------------------------------------------------------------------------
-	//------------------------------------LINKEDIN TESTS---------------------------------------------------------
+	//------------------------------------GITHUB TESTS---------------------------------------------------------
 	
-	public void testInputLINKEDINGoogleDns() {
-		String[] args = {"@8.8.8.8", "www.linkedin.com"};
+	public void testInputGITHUBGoogleDns() {
+		String[] args = {"@8.8.8.8", "www.github.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -140,31 +140,8 @@ public class test {
 		}
 	}
 	
-	public void testInputLINKEDINMcGillDns() {
-		String[] args = {"@132.206.85.18", "www.linkedin.com"};
-		try {
-			DNSClient.main(args);
-		} 		
-		catch (Exception exception) {
-			System.out.println("Error is " + exception);
-		}
-	}
-	
-	//------------------------------------------------------------------------------------------------------
-	//------------------------------------CBC TESTS---------------------------------------------------------
-	
-	public void testInputCBCGoogleDns() {
-		String[] args = {"@8.8.8.8", "www.cbc.ca"};
-		try {
-			DNSClient.main(args);
-		} 		
-		catch (Exception exception) {
-			System.out.println("Error is " + exception);
-		}
-	}
-	
-	public void testInputCBCMcGillDns() {
-		String[] args = {"@132.206.85.18", "www.cbc.ca"};
+	public void testInputGITHUBMcGillDns() {
+		String[] args = {"@132.206.85.18", "www.github.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -174,10 +151,10 @@ public class test {
 	}
 	
 	//------------------------------------------------------------------------------------------------------
-	//------------------------------------AMAZON TESTS---------------------------------------------------------
+	//------------------------------------APPLE TESTS---------------------------------------------------------
 	
-	public void testInputAMAZONGoogleDns() {
-		String[] args = {"@8.8.8.8", "www.amazon.com"};
+	public void testInputAPPLEGoogleDns() {
+		String[] args = {"@8.8.8.8", "www.apple.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -186,8 +163,8 @@ public class test {
 		}
 	}
 	
-	public void testInputAMAZONMcGillDns() {
-		String[] args = {"@132.206.85.18", "www.amazon.com"};
+	public void testInputAPPLEMcGillDns() {
+		String[] args = {"@132.206.85.18", "www.apple.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -197,10 +174,10 @@ public class test {
 	}
 	
 	//------------------------------------------------------------------------------------------------------
-	//------------------------------------YAHOO TESTS---------------------------------------------------------
+	//------------------------------------YOUTUBE TESTS---------------------------------------------------------
 	
-	public void testInputYAHOOGoogleDns() {
-		String[] args = {"@8.8.8.8", "www.yahoo.ca"};
+	public void testInputYOUTUBEGoogleDns() {
+		String[] args = {"@8.8.8.8", "www.youtube.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -209,8 +186,31 @@ public class test {
 		}
 	}
 	
-	public void testInputYAHOOMcGillDns() {
-		String[] args = {"@132.206.85.18", "www.yahoo.ca"};
+	public void testInputYOUTUBEMcGillDns() {
+		String[] args = {"@132.206.85.18", "www.youtube.com"};
+		try {
+			DNSClient.main(args);
+		} 		
+		catch (Exception exception) {
+			System.out.println("Error is " + exception);
+		}
+	}
+	
+	//------------------------------------------------------------------------------------------------------
+	//------------------------------------MICROSOFT TESTS---------------------------------------------------------
+	
+	public void testInputMICROSOFTGoogleDns() {
+		String[] args = {"@8.8.8.8", "www.microsoft.com"};
+		try {
+			DNSClient.main(args);
+		} 		
+		catch (Exception exception) {
+			System.out.println("Error is " + exception);
+		}
+	}
+	
+	public void testInputMICROSOFTMcGillDns() {
+		String[] args = {"@132.206.85.18", "www.microsoft.com"};
 		try {
 			DNSClient.main(args);
 		} 		
@@ -309,48 +309,65 @@ public class test {
 		System.out.println();
 		System.out.println();
 		
-		System.out.println("www.amazon.com -------> using Google DNS Server");
-		test.testInputAMAZONGoogleDns();
+		System.out.println("www.github.com -------> using Google DNS Server");
+		test.testInputGITHUBGoogleDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 	
 		
-		System.out.println("www.amazon.com -------> using McGill DNS Server");
-		test.testInputAMAZONMcGillDns();
+		System.out.println("www.github.com -------> using McGill DNS Server");
+		test.testInputGITHUBMcGillDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		
 		
-		System.out.println("www.linkedin.com -------> using Google DNS Server");
-		test.testInputLINKEDINGoogleDns();
+		
+		System.out.println("www.apple.com -------> using Google DNS Server");
+		test.testInputAPPLEGoogleDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 	
 		
-		System.out.println("www.linkedin.com -------> using McGill DNS Server");
-		test.testInputLINKEDINMcGillDns();
+		System.out.println("www.apple.com -------> using McGill DNS Server");
+		test.testInputAPPLEMcGillDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		
 		
-		System.out.println("www.cbc.ca -------> using Google DNS Server");
-		test.testInputCBCGoogleDns();
+		System.out.println("www.youtube.com -------> using Google DNS Server");
+		test.testInputYOUTUBEGoogleDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 		System.out.println();
 	
 		
-		System.out.println("www.cbc.ca -------> using McGill DNS Server");
-		test.testInputCBCMcGillDns();
+		System.out.println("www.youtube.com -------> using McGill DNS Server");
+		test.testInputYOUTUBEMcGillDns();
+		System.out.println();
+		System.out.println();
+		System.out.println();
+		System.out.println();
+		
+		
+		System.out.println("www.microsoft.com -------> using Google DNS Server");
+		test.testInputMICROSOFTGoogleDns();
+		System.out.println();
+		System.out.println();
+		System.out.println();
+		System.out.println();
+	
+		
+		System.out.println("www.microsoft.com -------> using McGill DNS Server");
+		test.testInputMICROSOFTMcGillDns();
 		System.out.println();
 		System.out.println();
 		System.out.println();
@@ -359,20 +376,7 @@ public class test {
 
 	
 		
-		System.out.println("www.yahoo.ca -------> using Google DNS Server");
-		test.testInputYAHOOGoogleDns();
-		System.out.println();
-		System.out.println();
-		System.out.println();
-		System.out.println();
-	
-		
-		System.out.println("www.yahoo.ca -------> using McGill DNS Server");
-		test.testInputYAHOOMcGillDns();
-		System.out.println();
-		System.out.println();
-		System.out.println();
-		System.out.println();
+
 		
 	}
 

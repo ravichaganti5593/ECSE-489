@@ -1,0 +1,313 @@
+www.mcgill.ca -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.mcgill.ca
+Server: 8.8.8.8
+Request type: A
+Response received after 37 ms (0 retries)
+***Answer  Section  (1  records)***
+IP	132.216.177.160	115	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.mcgill.ca -------> using Google DNS Server - for NS
+-------------Executing Program-----------------
+DnsClient sending request for mcgill.ca
+Server: 8.8.8.8
+Request type: NS
+Response received after 76 ms (0 retries)
+***Answer  Section  (2  records)***
+NS	pens2.mcgill.ca	3599	nonauth
+NS	pens1.mcgill.ca	3599	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.mcgill.ca -------> using Google DNS Server - for MX
+-------------Executing Program-----------------
+DnsClient sending request for mcgill.ca
+Server: 8.8.8.8
+Request type: MX
+Response received after 36 ms (0 retries)
+***Answer  Section  (1  records)***
+MX	mx.mcgill.ca	10	2651	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.mcgill.ca -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.mcgill.ca
+Server: 132.206.85.18
+Request type: A
+Response received after 2 ms (0 retries)
+***Answer  Section  (1  records)***
+IP	132.216.177.160	612	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.mcgill.ca -------> using McGill DNS Server - for NS
+-------------Executing Program-----------------
+DnsClient sending request for mcgill.ca
+Server: 132.206.85.18
+Request type: NS
+Response received after 2 ms (0 retries)
+***Answer  Section  (6  records)***
+NS	pirns3.mcgill.ca	599	nonauth
+NS	oolong.cc.mcgill.ca	599	nonauth
+NS	moka.mcgill.ca	599	nonauth
+NS	pirns2.mcgill.ca	599	nonauth
+NS	kona.mcgill.ca	599	nonauth
+NS	pirns1.mcgill.ca	599	nonauth
+***Additional Section (6 records)***
+Program successfully finished
+
+
+
+
+www.google.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.google.com
+Server: 8.8.8.8
+Request type: A
+Response received after 36 ms (0 retries)
+***Answer  Section  (1  records)***
+IP	172.217.2.4	114	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.google.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.google.com
+Server: 132.206.85.18
+Request type: A
+Response received after 2 ms (0 retries)
+***Answer  Section  (16  records)***
+IP	206.167.212.117	82	nonauth
+IP	206.167.212.84	82	nonauth
+IP	206.167.212.99	82	nonauth
+IP	206.167.212.113	82	nonauth
+IP	206.167.212.90	82	nonauth
+IP	206.167.212.112	82	nonauth
+IP	206.167.212.80	82	nonauth
+IP	206.167.212.95	82	nonauth
+IP	206.167.212.121	82	nonauth
+IP	206.167.212.102	82	nonauth
+IP	206.167.212.123	82	nonauth
+IP	206.167.212.88	82	nonauth
+IP	206.167.212.101	82	nonauth
+IP	206.167.212.106	82	nonauth
+IP	206.167.212.110	82	nonauth
+IP	206.167.212.91	82	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.facebook.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.facebook.com
+Server: 8.8.8.8
+Request type: A
+Response received after 13 ms (0 retries)
+***Answer  Section  (2  records)***
+CNAME	star-mini.c10r.	60	nonauth
+IP	157.240.3.35	23	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.facebook.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.facebook.com
+Server: 132.206.85.18
+Request type: A
+Response received after 2 ms (0 retries)
+***Answer  Section  (2  records)***
+CNAME	star-mini.c10r.	2335	nonauth
+IP	31.13.80.36	29	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.ndtv.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.ndtv.com
+Server: 8.8.8.8
+Request type: A
+Response received after 46 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.ndtv.com.edgesuite.net	128	nonauth
+CNAME	a1807.f1.akamai.	18224	nonauth
+IP	206.167.78.30	19	nonauth
+IP	206.167.78.14	19	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.ndtv.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.ndtv.com
+Server: 132.206.85.18
+Request type: A
+Response received after 4 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.ndtv.com.edgesuite.net	25157	nonauth
+CNAME	a1807.f1.akamai.	110	nonauth
+IP	206.167.78.14	20	nonauth
+IP	206.167.78.30	20	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.github.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.github.com
+Server: 8.8.8.8
+Request type: A
+Response received after 11 ms (0 retries)
+***Answer  Section  (3  records)***
+CNAME		65	nonauth
+IP	192.30.253.112	37	nonauth
+IP	192.30.253.113	37	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.github.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.github.com
+Server: 132.206.85.18
+Request type: A
+Response received after 2 ms (0 retries)
+***Answer  Section  (3  records)***
+CNAME		379	nonauth
+IP	192.30.253.112	74	nonauth
+IP	192.30.253.113	74	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.apple.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.apple.com
+Server: 8.8.8.8
+Request type: A
+Response received after 13 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.apple.com.edgekey.net	110	nonauth
+CNAME	www.apple.com.edgekey.net.globalredir.akadns.	12	nonauth
+CNAME	e6858.dsce9.akamaiedge.	3593	nonauth
+IP	23.4.124.20	13	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.apple.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.apple.com
+Server: 132.206.85.18
+Request type: A
+Response received after 3 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.apple.com.edgekey.net	30	nonauth
+CNAME	www.apple.com.edgekey.net.globalredir.akadns.	42	nonauth
+CNAME	e6858.dsce9.akamaiedge.	44	nonauth
+IP	23.9.119.168	20	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.youtube.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.youtube.com
+Server: 8.8.8.8
+Request type: A
+Response received after 39 ms (0 retries)
+***Answer  Section  (2  records)***
+CNAME	youtube-ui.l.google.	21599	nonauth
+IP	172.217.4.206	299	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.youtube.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.youtube.com
+Server: 132.206.85.18
+Request type: A
+Response received after 3 ms (0 retries)
+***Answer  Section  (2  records)***
+CNAME	youtube-ui.l.google.	22319	nonauth
+IP	172.217.2.14	127	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.microsoft.com -------> using Google DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.microsoft.com
+Server: 8.8.8.8
+Request type: A
+Response received after 12 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.microsoft.com-c-2.edgekey.net	59	nonauth
+CNAME	www.microsoft.com-c-2.edgekey.net.globalredir.akadns.	21268	nonauth
+CNAME	e2847.dspb.akamaiedge.	892	nonauth
+IP	104.96.49.206	12	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
+www.microsoft.com -------> using McGill DNS Server
+-------------Executing Program-----------------
+DnsClient sending request for www.microsoft.com
+Server: 132.206.85.18
+Request type: A
+Response received after 14 ms (0 retries)
+***Answer  Section  (4  records)***
+CNAME	www.microsoft.com-c-2.edgekey.net	3442	nonauth
+CNAME	www.microsoft.com-c-2.edgekey.net.globalredir.akadns.	21091	nonauth
+CNAME	e2847.dspb.akamaiedge.	121	nonauth
+IP	23.54.187.235	20	nonauth
+***Additional Section (0 records)***
+Program successfully finished
+
+
+
+
