@@ -29,6 +29,7 @@ public class DNSClient {
 		//create socket connection
 		ClientServerConnection ClientServerConnection = new ClientServerConnection(DNSClientParameters.getTIMEOUT(), DNSClientParameters.getMAXRETRIES(), DNSClientParameters.getDNSPORTNUMBER(), DNSClientParameters.getTYPE(), DNSClientParameters.getSERVERIPADDRESS(), DNSClientParameters.getDOMAIN(), DNSClientParameters.getServerIPAddressBytes());
 		ClientServerConnection.createSocketConnection();
+
 		
 		//print output by interpreting server response
 		DNSServerResponse DNSServerResponse = new DNSServerResponse(ClientServerConnection.getDNSReceivePacket(), ClientServerConnection.getHeaderBuffer(), ClientServerConnection.getQuestionBuffer(), ClientServerConnection.getAnswerBuffer(), ClientServerConnection.getPacketBuffer(), ClientServerConnection.getRTT(), ClientServerConnection.getConnectionRetries(), DNSClientParameters.getDOMAIN(), DNSClientParameters.getSERVERIPADDRESS(), DNSClientParameters.getTYPE());

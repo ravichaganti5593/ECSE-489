@@ -12,7 +12,7 @@ public class ClientServerConnection {
 	int TIMEOUT = 5;
 	int MAXRETRIES = 3;
 	int DNSPORTNUMBER = 53;
-	String TYPE = "A";
+	public String TYPE = "A";
 	String SERVERIPADDRESS = "";
 	String DOMAIN = "";
 	byte[] serverIPAddressBytes = new byte[4];

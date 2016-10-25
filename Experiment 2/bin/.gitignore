@@ -1,9 +1,1 @@
-/DNSClient.class
-/DNSHeader.class
-/DNSQuestion.class
-/DNSAnswer.class
-/answerRecords.class
-/ClientServerConnection.class
-/DNSParseInput.class
-/DNSClientParameters.class
-/DNSServerResponse.class
+/test.class

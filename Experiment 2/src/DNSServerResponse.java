@@ -37,6 +37,8 @@ public class DNSServerResponse {
 		
 		
 		byte[] dataReceived = DNSReceivePacket.getData();
+		
+
 		int answerIndex = headerBuffer.capacity() + questionBuffer.capacity();
 		byte[] receivedAnswer = Arrays.copyOfRange(dataReceived, answerIndex, dataReceived.length);
 		
@@ -45,7 +47,7 @@ public class DNSServerResponse {
 		System.out.println("Request type: " + TYPE);
 		
 		//check ID
-		if (dataReceived[1]  != headerBuffer.get(1) || dataReceived[0] != headerBuffer.get(0) ) {
+		if (dataReceived[1]  != headerBuffer.get(1) && dataReceived[0] != headerBuffer.get(0) ) {
 			System.out.println("ERROR: IDs mismatch for request and response." );
 			System.exit(1);
 		}
@@ -87,10 +89,18 @@ public class DNSServerResponse {
 				System.exit(1);
 		}
 	
-		System.out.println("Response received after " + RTT + " milliseconds ("	+ connectionRetries + " retries)");
+		System.out.println("Response received after " + RTT + " ms ("	+ connectionRetries + " retries)");
 		
 		//Check ANCount
 		int answerRecords = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
+		//Check ARCount 
+		int additionalRecords = DNSReceivePacket.getData()[10] << 8 | DNSReceivePacket.getData()[11];
+		
+		if (additionalRecords == 0 && answerRecords == 0) {
+			System.out.println("NOT FOUND");
+			System.exit(1);
+		}
+		
 		System.out.println("***Answer  Section  (" + answerRecords + "  records)***");
 		
 		int nextAnswerIndex = 0;
@@ -106,11 +116,11 @@ public class DNSServerResponse {
 			 
 			DNSRecords(Arrays.copyOfRange(receivedAnswer, currentAnswerIndex, nextAnswerIndex), RDLength, isAuthority);		
 			
-		}
+		}	
 		
-		//print additional records
-		int additionalRecords = DNSReceivePacket.getData()[10] << 8 | DNSReceivePacket.getData()[11];
+
 		System.out.println("***Additional Section (" + additionalRecords + " records)***");
+
 		
 			
 	}
@@ -120,7 +130,7 @@ public class DNSServerResponse {
 		//retrieve values from response for Type, Class, TTL, and RDLength
 		short Type = (short) (data[2] << 8 | data[3]);
 		short Class = (short) (data[4] << 4 | data[5]);
-		int TTL = data[6] << 24 | data[7] << 16 | data[8] << 8 | data[9];
+		int TTL = Math.abs(data[6] << 24 | data[7] << 16 | data[8] << 8 | data[9]);
 		String authorityValue = authority ? "auth" : "nonauth";
 		
 		if (Class != 0x0001) {
@@ -172,38 +182,47 @@ public class DNSServerResponse {
 	public void TypeNS(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
 
 		ByteBuffer buffer = ByteBuffer.allocate(RDLength);
-		int bufferSize = buffer.array().length;
 		for (byte b : Arrays.copyOfRange(data, startIndex, data.length)) {
+			if (String.format("%02X", b).equals("C0")) {
+				break;
+			}
 			buffer.put(b);
 		}
 
-		StringBuilder sb = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 
-		for (int i = 0; i < bufferSize; i++) {
-			char[] subDomain = new char[buffer.array()[i++]];
-			for (int j = 0; j < subDomain.length; j++) {
-				subDomain[j] = (char) buffer.array()[i++];
+		for (int i = 0; i < buffer.array().length; i++) {
+			if (buffer.array()[i] == 0) {
+				break;
 			}
-			sb.append(subDomain);
+			char[] chars = new char[buffer.array()[i++]];
+			for (int j = 0; j < chars.length; j++) {
+				chars[j] = (char) buffer.array()[i++];
+			}
 			
-			if (i < bufferSize - 1) {
-				sb.append(".");
+			builder.append(chars);
+			
+			if (i < buffer.array().length - 1) {
+				builder.append(".");
 			}
 			i--;
 		}
 
-		String fullDomain = sb.toString();
+		// StringBuilder builder = new StringBuilder();
+		// builder.append(chars);
+		String first = builder.toString();
 		
-		if (data[0] == 0xc0) {		//for offset
+		if (data[0] == 0xc0) {
 			int pointer = data[1];
 			int offset = pointer - 12;
 			String secondName = DOMAIN.substring(offset);
-			String nameServer = fullDomain + secondName;
-			System.out.println("NS	" + nameServer + "	" + TTL + "	" + authorityValue);
+			String ns = (first.concat(secondName));
+			System.out.println("NS	" + ns + "	" + TTL + "	" + authorityValue);
 		} 
 		
 		else {
-			System.out.println("NS	" + fullDomain + "	" + TTL + "	"	+ authorityValue);
+			String fullNameServer = first.concat(DOMAIN);
+			System.out.println("NS	" + fullNameServer + "	" + TTL + "	" + authorityValue);
 		}
 	}
 	
@@ -214,6 +233,9 @@ public class DNSServerResponse {
 		StringBuilder builder = new StringBuilder();
 
 		for (byte b : Arrays.copyOfRange(data, startIndex + 2, data.length)) {
+			if (String.format("%02X", b).equals("C0")) {
+				break;
+			}
 			buffer.put(b);
 		}
 
@@ -226,30 +248,25 @@ public class DNSServerResponse {
 				chars[j] = (char) buffer.array()[i++];
 			}
 			builder.append(chars);
-			
 			if (i < buffer.array().length - 1) {
 				builder.append(".");
 			}
 			i--;
 		}
-		
-		
+
 		String first = builder.toString();
+		
 		if (data[data.length - 2] == 0xc0) {
 			int pointer = data[data.length - 1];
 			int offset = pointer - 12;
-
-			
 			String secondName = DOMAIN.substring(offset);
 			String mx = (first.concat(secondName));
-			System.out.println("MX	" + mx + "	" + preference + "	" + TTL
-					+ "	" + authorityValue);
+			System.out.println("MX	" + mx + "	" + preference + "	" + TTL + "	" + authorityValue);
 		} 
 		
 		else {
-			first = builder.toString();
-			System.out.println("MX	" + first + "	" + preference + "	" + TTL
-					+ "	" + authorityValue);
+			String fullMailServer = first.concat(DOMAIN);
+			System.out.println("MX	" + fullMailServer + "	" + preference + "	" + TTL + "	" + authorityValue);
 		}
 	}
 	

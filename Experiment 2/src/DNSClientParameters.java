@@ -77,7 +77,7 @@ public class DNSClientParameters {
 				TYPE = "MX";
 			}
 			
-			else if (args[i].equals("-nx")) {
+			else if (args[i].equals("-ns")) {
 				TYPE = "NS";
 			}
 			
