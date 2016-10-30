@@ -18,3 +18,8 @@ To run the program, perform the following steps in your terminal:
 Note: 
 
 Test results can be found in DNSResults.txt for 7 domains with different combinations of input parameters. 
+
+
+Link to Github:
+
+https://github.com/ravichaganti5593/ECSE-489/tree/master/Experiment%202
