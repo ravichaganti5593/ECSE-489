@@ -39,13 +39,13 @@ public class ClientServerConnection {
 	public void createSocketConnection() {
 		
 		DNSHeader DNSHeader = new DNSHeader();	
-		headerPacketBuffer = DNSHeader.GetPacketHeader();
+		headerPacketBuffer = DNSHeader.GetPacketHeader();	//create header packet
 		
 		DNSQuestion DNSQuestion = new DNSQuestion(DOMAIN, TYPE);
-		questionPacketBuffer = DNSQuestion.GetQuestion();
+		questionPacketBuffer = DNSQuestion.GetQuestion();	//create question packet
 		
-		answerPacketBuffer = ByteBuffer.allocate(512 - headerPacketBuffer.capacity() - questionPacketBuffer.capacity());
-		totalPacketBuffer = ByteBuffer.allocate(headerPacketBuffer.capacity() + questionPacketBuffer.capacity() + answerPacketBuffer.capacity());
+		answerPacketBuffer = ByteBuffer.allocate(512 - headerPacketBuffer.capacity() - questionPacketBuffer.capacity());	//create size for empty answer packet
+		totalPacketBuffer = ByteBuffer.allocate(headerPacketBuffer.capacity() + questionPacketBuffer.capacity() + answerPacketBuffer.capacity());		//create total packet
 		
 		totalPacketBuffer.put(headerPacketBuffer.array());
 		totalPacketBuffer.put(questionPacketBuffer.array());

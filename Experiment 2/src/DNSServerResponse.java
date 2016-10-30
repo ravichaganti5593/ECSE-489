@@ -34,8 +34,7 @@ public class DNSServerResponse {
 	
 	//will print all the required output as described in the lab experiment guidelines
 	public void outputBehavior() { 
-		
-		
+	
 		byte[] dataReceived = ReceivedPacket.getData();
 		
 		byte[] answerFromDataReceived = Arrays.copyOfRange(dataReceived, headerPacketBuffer.capacity() + questionPacketBuffer.capacity(), dataReceived.length);
@@ -183,11 +182,10 @@ public class DNSServerResponse {
 		
 		//if there is an offset  
 		if (answer[0] == 0xc0) {
-			int pointer = answer[1];
-			int offset = pointer - 12;		//since there is an offset of 12
-			String secondName = DOMAIN.substring(offset);	//simply add thing like mcgill.ca 
-			String ns = (compressedStringData.concat(secondName));
-			System.out.println("NS	" + ns + "	" + responseTTL + "	" + responseAuthorityValue);
+			int rDataOffset = answer[1] - 12;		//shift by an offset of 12 for mcgill.ca
+			String domainOffset = DOMAIN.substring(rDataOffset);	//simply add thing like mcgill.ca 
+			String fullNameServer = (compressedStringData.concat(domainOffset));
+			System.out.println("NS	" + fullNameServer + "	" + responseTTL + "	" + responseAuthorityValue);
 		} 
 		
 		else {
@@ -207,11 +205,10 @@ public class DNSServerResponse {
 		
 		//if there is an offset
 		if (answer[answer.length - 2] == 0xc0) {		//shift 2 because of preference
-			int pointer = answer[answer.length - 1];
-			int offset = pointer - 12;		//since there is an offset of 12
-			String secondName = DOMAIN.substring(offset);		//simply add thing like mcgill.ca 
-			String mx = (compressedStringData.concat(secondName));
-			System.out.println("MX	" + mx + "	" + preference + "	" + responseTTL + "	" + responseAuthorityValue);
+			int rDataOffset = answer[answer.length - 1] - 12;		//shift by an offset of 12 for mcgill.ca
+			String domainOffset = DOMAIN.substring(rDataOffset);		//simply add thing like mcgill.ca 
+			String fullNameServer = (compressedStringData.concat(domainOffset));
+			System.out.println("MX	" + fullNameServer + "	" + preference + "	" + responseTTL + "	" + responseAuthorityValue);
 		} 
 		
 		else { 
@@ -220,17 +217,16 @@ public class DNSServerResponse {
 		}
 	}
 	
-	
+	//for type CNAME: canonical names
 	public void TypeCNAME(byte[] answer, int rDataIndex, int RDLength, int responseTTL, String responseAuthorityValue) {
 		
 		String compressedStringData = retrieveCompressedData(answer, rDataIndex, RDLength);
 		
 		//if there is an offset 
-		if (answer[rDataIndex] == 0xc0) {
-			int pointer = answer[rDataIndex + 1];		
-			int offset = pointer - 12;		//shift by an offset of 12 for mcgill.ca
-			String cname = DOMAIN.substring(offset);
-			System.out.println("CNAME	" + cname + "	" + responseTTL + "	"	+ responseAuthorityValue);
+		if (answer[rDataIndex] == 0xc0) {	
+			int rDataOffset = answer[rDataIndex + 1] - 12;		//shift by an offset of 12 for mcgill.ca
+			String fullNameServer = DOMAIN.substring(rDataOffset);	//simply add thing like mcgill.ca 
+			System.out.println("CNAME	" + fullNameServer + "	" + responseTTL + "	"	+ responseAuthorityValue);
 		} 
 		
 		//no offset
@@ -239,7 +235,6 @@ public class DNSServerResponse {
 		}
 	
 	}
-	
 	
 	//allocate space and store rData into ByteBuffer type by checking if there is an offset 
 	public ByteBuffer convertRDataIntoByteBuffer(byte[] answer, int rDataIndex, int RDLength) {
@@ -264,7 +259,7 @@ public class DNSServerResponse {
 		
 		ByteBuffer resultByteBuffer = convertRDataIntoByteBuffer(answer, rDataIndex, RDLength); 
 		
-		StringBuilder resultString = new StringBuilder();
+		StringBuilder resultSB = new StringBuilder();
 		for (int j = 0; j < resultByteBuffer.array().length; j++) {
 			//values in compressed form are converted back to domain form
 			char[] values = new char[resultByteBuffer.array()[j++]];
@@ -273,16 +268,16 @@ public class DNSServerResponse {
 				values[k] = (char) resultByteBuffer.array()[j++];
 			}
 			
-			resultString.append(values);
+			resultSB.append(values);
 			
 			if (resultByteBuffer.array().length > j + 1) {
-				resultString.append(".");
+				resultSB.append(".");
 			}
 			
-			j -=1; 
+			j -=1;  
 		}
 
-		return resultString.toString();	
+		return resultSB.toString();	
 	}
 	
 }
