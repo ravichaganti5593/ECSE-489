@@ -15,5 +15,6 @@ To run the program, perform the following steps in your terminal:
 2. java DNSClient [-t timeout] [-r max-retries] [-p port] [-mx|-ns] @server name
 
 
-Note
+Note: 
+
 Test results can be found in DNSResults.txt for 7 domains with different combinations of input parameters. 
