@@ -37,8 +37,8 @@ public class DNSHeader {
 		Z = 0x0;
 		RCode = 0x0;
 		
-		Random random = new Random();
-		ID = (short) random.nextInt(Short.MAX_VALUE + 1);
+		Random randomNumber = new Random();
+		ID = (short) randomNumber.nextInt(Short.MAX_VALUE + 1);
 		QDCount = 0x1;
 		ANCount = 0x0;
 		NSCount = 0x0;

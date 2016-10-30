@@ -7,11 +7,11 @@ import java.util.Arrays;
 
 public class DNSServerResponse {
 	
-	DatagramPacket DNSReceivePacket;
-	ByteBuffer headerBuffer;
-	ByteBuffer questionBuffer;
-	ByteBuffer answerBuffer;
-	ByteBuffer packetBuffer;
+	DatagramPacket ReceivedPacket;
+	ByteBuffer headerPacketBuffer;
+	ByteBuffer questionPacketBuffer;
+	ByteBuffer answerPacketBuffer;
+	ByteBuffer totalPacketBuffer;
 	long RTT = 0;
 	int connectionRetries = 0;
 	 
@@ -20,11 +20,11 @@ public class DNSServerResponse {
 	String TYPE = "A";
 	
 	public DNSServerResponse(DatagramPacket DNSReceivePacket, ByteBuffer headerBuffer, ByteBuffer questionBuffer, ByteBuffer answerBuffer, ByteBuffer packetBuffer, long RTT, int connectionRetries, String DOMAIN, String SERVERIPADDRESS, String TYPE) {
-		this.DNSReceivePacket = DNSReceivePacket;
-		this.headerBuffer = headerBuffer;
-		this.questionBuffer = questionBuffer;
-		this.answerBuffer = answerBuffer;
-		this.packetBuffer = packetBuffer;
+		this.ReceivedPacket = DNSReceivePacket;
+		this.headerPacketBuffer = headerBuffer;
+		this.questionPacketBuffer = questionBuffer;
+		this.answerPacketBuffer = answerBuffer;
+		this.totalPacketBuffer = packetBuffer; 
 		this.RTT = RTT;
 		this.connectionRetries = connectionRetries;
 		this.DOMAIN = DOMAIN;
@@ -32,27 +32,66 @@ public class DNSServerResponse {
 		this.TYPE = TYPE;
 	}
 	
-	
+	//will print all the required output as described in the lab experiment guidelines
 	public void outputBehavior() { 
 		
 		
-		byte[] dataReceived = DNSReceivePacket.getData();
+		byte[] dataReceived = ReceivedPacket.getData();
 		
-
-		int answerIndex = headerBuffer.capacity() + questionBuffer.capacity();
-		byte[] receivedAnswer = Arrays.copyOfRange(dataReceived, answerIndex, dataReceived.length);
+		byte[] answerFromDataReceived = Arrays.copyOfRange(dataReceived, headerPacketBuffer.capacity() + questionPacketBuffer.capacity(), dataReceived.length);
 		
 		System.out.println("DnsClient sending request for " + DOMAIN);
 		System.out.println("Server: " + SERVERIPADDRESS);
 		System.out.println("Request type: " + TYPE);
 		
-		//check ID
-		if (dataReceived[1]  != headerBuffer.get(1) && dataReceived[0] != headerBuffer.get(0) ) {
+		checkDataReceived(dataReceived);
+	
+		System.out.println("Response received after " + RTT + " ms ("	+ connectionRetries + " retries)");
+		
+		//Check ANCount
+		int answerRecords = ReceivedPacket.getData()[6] << 8 | ReceivedPacket.getData()[7];
+		//Check ARCount 
+		int additionalRecords = ReceivedPacket.getData()[10] << 8 | ReceivedPacket.getData()[11];
+		
+		if (additionalRecords == 0 && answerRecords == 0) {
+			System.out.println("NOT FOUND: no answer records or additional records found in received packet from server"); 
+			System.exit(1);
+		}
+		
+		System.out.println("***Answer  Section  (" + answerRecords + "  records)***");
+		
+		
+		/*
+		 * to print all the values in all the answer records for A, NS, MX and CNAME
+		 */
+		int followingAnswerResult = 0, answerResult = 0;
+		
+		for (int i = 0; i < answerRecords; i++) {
+			short RDLength = (short) ((answerFromDataReceived[followingAnswerResult + 10] << 8) | (answerFromDataReceived[followingAnswerResult + 11])); 
+																													
+			answerResult = followingAnswerResult;
+			followingAnswerResult = followingAnswerResult + (12 + RDLength); 
+			
+			byte authority = (byte) (dataReceived[3] & 0x4);		//check with AA data and 4 octets
+			boolean isAuthority = authority == 4 ? true : false; 	//if equal to 4, then dataReceived[3] == 1 (authoritative)
+			 
+			DNSRecords(Arrays.copyOfRange(answerFromDataReceived, answerResult, followingAnswerResult), RDLength, isAuthority);		
+			
+		}	
+
+		System.out.println("***Additional Section (" + additionalRecords + " records)***");
+		
+	}
+	
+	//will check ID, QR, RA and RCode for any mismatch/errors between request and response packets
+	public void checkDataReceived(byte[] dataReceived) {
+		//check ID for request and response packets
+		if (dataReceived[0] != headerPacketBuffer.get(0) && dataReceived[1]  != headerPacketBuffer.get(1)) {
 			System.out.println("ERROR: IDs mismatch for request and response." );
 			System.exit(1);
 		}
 		
-		//check QR
+		//check QR --> QR should be 1 for response or 0 for request 
 		if (((byte) ((dataReceived[2] >> 8) & 1)) != 1) {
 			System.out.println("ERROR: Response packet is not response but request.");
 			System.exit(1);
@@ -65,9 +104,7 @@ public class DNSServerResponse {
 		}
 		 
 		//Check for RCode error types
-		byte RCode = (byte)(dataReceived[3] << 4);
-		
-		switch (RCode) {
+		switch ((byte)(dataReceived[3] << 4)) {
 			case 1:
 				System.out.println("ERROR RCODE 1: the name server was unable to interpret the query");
 				System.exit(1);
@@ -88,228 +125,164 @@ public class DNSServerResponse {
 				System.out.println("Error RCODE 5: the name server refuses to perform the requested operation for policy reasons");
 				System.exit(1);
 		}
-	
-		System.out.println("Response received after " + RTT + " ms ("	+ connectionRetries + " retries)");
-		
-		//Check ANCount
-		int answerRecords = DNSReceivePacket.getData()[6] << 8 | DNSReceivePacket.getData()[7];
-		//Check ARCount 
-		int additionalRecords = DNSReceivePacket.getData()[10] << 8 | DNSReceivePacket.getData()[11];
-		
-		if (additionalRecords == 0 && answerRecords == 0) {
-			System.out.println("NOT FOUND");
-			System.exit(1);
-		}
-		
-		System.out.println("***Answer  Section  (" + answerRecords + "  records)***");
-		
-		int nextAnswerIndex = 0;
-		int currentAnswerIndex = 0;
-		for (int i = 0; i < answerRecords; i++) {
-			short RDLength = (short) ((receivedAnswer[nextAnswerIndex + 10] << 8) | (receivedAnswer[nextAnswerIndex + 11])); 
-																													
-			currentAnswerIndex = nextAnswerIndex;
-			nextAnswerIndex = nextAnswerIndex + (12 + RDLength);
-			
-			byte authorityBit = (byte) (dataReceived[3] & 0x4);		//check with AA data and 4 octets
-			boolean isAuthority = authorityBit == 4 ? true : false;
-			 
-			DNSRecords(Arrays.copyOfRange(receivedAnswer, currentAnswerIndex, nextAnswerIndex), RDLength, isAuthority);		
-			
-		}	
-		
-
-		System.out.println("***Additional Section (" + additionalRecords + " records)***");
-
-		
-			
 	}
 	
-	public void DNSRecords(byte[] data, int RDLength, boolean authority) {
+	public void DNSRecords(byte[] answer, int RDLength, boolean authority) {
 		
-		//retrieve values from response for Type, Class, TTL, and RDLength
-		short Type = (short) (data[2] << 8 | data[3]);
-		short Class = (short) (data[4] << 4 | data[5]);
-		int TTL = Math.abs(data[6] << 24 | data[7] << 16 | data[8] << 8 | data[9]);
-		String authorityValue = authority ? "auth" : "nonauth";
+		//retrieve values from response for Type, TTL, authority value and RDLength
+		short responseType = (short) (answer[2] << 8 | answer[3]);
+		int responseTTL = Math.abs(answer[6] << 24 | answer[7] << 16 | answer[8] << 8 | answer[9]);
+		String responseAuthorityValue = authority ? "auth" : "nonauth";
 		
-		if (Class != 0x0001) {
-			System.out.println("Error: CLASS value is not 0x0001");
-			System.exit(1);
+		int rDataIndex = 12; //bytes up to rdata 
+		
+		if (responseType == 0x0001) {		//TYPE: "A", 		
+			TypeA(answer, rDataIndex, RDLength, responseTTL, responseAuthorityValue);
 		}
 		
-		int startIndex = 12; //bytes up to rdata
-		
-		if (Type == 0x0001) {		//TYPE: "A", 		
-			TypeA(data, startIndex, RDLength, TTL, authorityValue);
+		else if (responseType == 0x0002) {	//TYPE: "NS"
+			TypeNS(answer, rDataIndex, RDLength, responseTTL, responseAuthorityValue);
 		}
 		
-		else if (Type == 0x0002) {	//TYPE: "NS"
-			TypeNS(data, startIndex, RDLength, TTL, authorityValue);
+		else if (responseType == 0x000f) {	//TYPE: "MX"
+			TypeMX(answer, rDataIndex, RDLength, responseTTL, responseAuthorityValue);
 		}
 		
-		else if (Type == 0x000f) {	//TYPE: "MX"
-			TypeMX(data, startIndex, RDLength, TTL, authorityValue);
-		}
-		
-		else if (Type == 0x0005) {	//TYPE: "CNAME"
-			TypeCNAME(data, startIndex, RDLength, TTL, authorityValue);
+		else if (responseType == 0x0005) {	//TYPE: "CNAME"
+			TypeCNAME(answer, rDataIndex, RDLength, responseTTL, responseAuthorityValue);
 		}
 	}
 	
 	
 	//for Type A: for an A (IP address) record, then RDATA is the IP address (four octets)
-	public void TypeA(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+	public void TypeA(byte[] answer, int rDataIndex, int RDLength, int responseTTL, String responseAuthorityValue) {
 		ByteBuffer IPAddress = ByteBuffer.allocate(4); //RDATA has IP address in 4 octets
-		for (int i = startIndex; i < startIndex + RDLength; i++) {		//need to understand this part
-			IPAddress.put(data[i]);
+		
+		int length = rDataIndex + RDLength;
+		for (int i = rDataIndex; i < length; i++) {		//need to understand this part
+			IPAddress.put(answer[i]);
 		}
 		
-		InetAddress address = null;
+		InetAddress IPAddressArray = null; 
 		try {
-			address = InetAddress.getByAddress(IPAddress.array());
+			IPAddressArray = InetAddress.getByAddress(IPAddress.array());
 		}
 		
 		catch (UnknownHostException exception) {
 			System.out.println("Error: Unknown host exception ->" + exception);
 		}
 		
-		System.out.println("IP	" + address.getHostAddress() + "	" + TTL + "	" + authorityValue); 
+		System.out.println("IP	" + IPAddressArray.getHostAddress() + "	" + responseTTL + "	" + responseAuthorityValue); 
 	}
 	
 	
 	//for Type NS: name of the server specified using the same format as the QNAME field
-	public void TypeNS(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+	public void TypeNS(byte[] answer, int rDataIndex, int RDLength, int responseTTL, String responseAuthorityValue) {
 
-		ByteBuffer buffer = ByteBuffer.allocate(RDLength);
-		for (byte b : Arrays.copyOfRange(data, startIndex, data.length)) {
-			if (String.format("%02X", b).equals("C0")) {
-				break;
-			}
-			buffer.put(b);
-		}
-
-		StringBuilder builder = new StringBuilder();
-
-		for (int i = 0; i < buffer.array().length; i++) {
-			if (buffer.array()[i] == 0) {
-				break;
-			}
-			char[] chars = new char[buffer.array()[i++]];
-			for (int j = 0; j < chars.length; j++) {
-				chars[j] = (char) buffer.array()[i++];
-			}
-			
-			builder.append(chars);
-			
-			if (i < buffer.array().length - 1) {
-				builder.append(".");
-			}
-			i--;
-		}
-
-		// StringBuilder builder = new StringBuilder();
-		// builder.append(chars);
-		String first = builder.toString();
+		String compressedStringData = retrieveCompressedData(answer, rDataIndex, RDLength);
 		
-		if (data[0] == 0xc0) {
-			int pointer = data[1];
-			int offset = pointer - 12;
-			String secondName = DOMAIN.substring(offset);
-			String ns = (first.concat(secondName));
-			System.out.println("NS	" + ns + "	" + TTL + "	" + authorityValue);
+		//if there is an offset  
+		if (answer[0] == 0xc0) {
+			int pointer = answer[1];
+			int offset = pointer - 12;		//since there is an offset of 12
+			String secondName = DOMAIN.substring(offset);	//simply add thing like mcgill.ca 
+			String ns = (compressedStringData.concat(secondName));
+			System.out.println("NS	" + ns + "	" + responseTTL + "	" + responseAuthorityValue);
 		} 
 		
 		else {
-			String fullNameServer = first.concat(DOMAIN);
-			System.out.println("NS	" + fullNameServer + "	" + TTL + "	" + authorityValue);
+			String fullNameServer = compressedStringData.concat(DOMAIN);
+			System.out.println("NS	" + fullNameServer + "	" + responseTTL + "	" + responseAuthorityValue);
 		}
 	}
 	
-	public void TypeMX(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
-		short preference = (short) (data[12] << 8 | data[13]);
-
-		ByteBuffer buffer = ByteBuffer.allocate(RDLength - 2);
-		StringBuilder builder = new StringBuilder();
-
-		for (byte b : Arrays.copyOfRange(data, startIndex + 2, data.length)) {
-			if (String.format("%02X", b).equals("C0")) {
-				break;
-			}
-			buffer.put(b);
-		}
-
-		for (int i = 0; i < buffer.array().length; i++) {
-			if (buffer.array()[i] == 0) {
-				break;
-			}
-			char[] chars = new char[buffer.array()[i++]];
-			for (int j = 0; j < chars.length; j++) {
-				chars[j] = (char) buffer.array()[i++];
-			}
-			builder.append(chars);
-			if (i < buffer.array().length - 1) {
-				builder.append(".");
-			}
-			i--;
-		}
-
-		String first = builder.toString();
+	//for Type MX: mail server records, then RDATA has the format of preference and exchange
+	public void TypeMX(byte[] answer, int rDataIndex, int RDLength, int responseTTL, String responseAuthorityValue) {
 		
-		if (data[data.length - 2] == 0xc0) {
-			int pointer = data[data.length - 1];
-			int offset = pointer - 12;
-			String secondName = DOMAIN.substring(offset);
-			String mx = (first.concat(secondName));
-			System.out.println("MX	" + mx + "	" + preference + "	" + TTL + "	" + authorityValue);
+		//specifying the preference given to this resource record among others at the same owner (lower values are preferred);
+		short preference = (short) (answer[12] << 8 | answer[13]);
+		
+		//parsing rDataIndex with an increment of 2 to remove preference index (same reason for decreasing RDLength by 2) since data is in exchange
+		String compressedStringData = retrieveCompressedData(answer, rDataIndex + 2, RDLength - 2);
+		
+		//if there is an offset
+		if (answer[answer.length - 2] == 0xc0) {		//shift 2 because of preference
+			int pointer = answer[answer.length - 1];
+			int offset = pointer - 12;		//since there is an offset of 12
+			String secondName = DOMAIN.substring(offset);		//simply add thing like mcgill.ca 
+			String mx = (compressedStringData.concat(secondName));
+			System.out.println("MX	" + mx + "	" + preference + "	" + responseTTL + "	" + responseAuthorityValue);
 		} 
 		
-		else {
-			String fullMailServer = first.concat(DOMAIN);
-			System.out.println("MX	" + fullMailServer + "	" + preference + "	" + TTL + "	" + authorityValue);
+		else { 
+			String fullMailServer = compressedStringData.concat(DOMAIN);
+			System.out.println("MX	" + fullMailServer + "	" + preference + "	" + responseTTL + "	" + responseAuthorityValue);
 		}
 	}
 	
-	public void TypeCNAME(byte[] data, int startIndex, int RDLength, int TTL, String authorityValue) {
+	
+	public void TypeCNAME(byte[] answer, int rDataIndex, int RDLength, int responseTTL, String responseAuthorityValue) {
 		
-		if (data[startIndex] == 0xc0) {
-			int pointer = data[startIndex + 1];
-			int offset = pointer - 12;
+		String compressedStringData = retrieveCompressedData(answer, rDataIndex, RDLength);
+		
+		//if there is an offset 
+		if (answer[rDataIndex] == 0xc0) {
+			int pointer = answer[rDataIndex + 1];		
+			int offset = pointer - 12;		//shift by an offset of 12 for mcgill.ca
 			String cname = DOMAIN.substring(offset);
-			System.out.println("CNAME	" + cname + "	" + TTL + "	"	+ authorityValue);
+			System.out.println("CNAME	" + cname + "	" + responseTTL + "	"	+ responseAuthorityValue);
 		} 
 		
+		//no offset
 		else {
-			ByteBuffer buffer = ByteBuffer.allocate(RDLength);
-			StringBuilder builder = new StringBuilder();
-
-			for (byte b : Arrays.copyOfRange(data, startIndex, data.length - 1)) {	//-1 to get rid of 0 in the end
-				if (String.format("%02X", b).equals("C0")) {
-					break;
-				}
-				buffer.put(b);
+			System.out.println("CNAME	" + compressedStringData + "	" + responseTTL + "	" + responseAuthorityValue);
+		}
+	
+	}
+	
+	
+	//allocate space and store rData into ByteBuffer type by checking if there is an offset 
+	public ByteBuffer convertRDataIntoByteBuffer(byte[] answer, int rDataIndex, int RDLength) {
+		ByteBuffer resultByteBuffer = ByteBuffer.allocate(RDLength);
+		for (byte b : Arrays.copyOfRange(answer, rDataIndex, answer.length)) {
+			//if there is an offset
+			if (String.format("%02X", b).equals("C0")) {	//format b byte and compare it with C0 for offset (java byte to hex string)
+				break;
 			}
 			
-			for (int i = 0; i < buffer.array().length - 2; i++) {
-				if (buffer.array()[i] == 0) {
-					break;
-				}
-				char[] chars = new char[buffer.array()[i++]];
-				for (int j = 0; j < chars.length; j++) {
-					chars[j] = (char) buffer.array()[i++];
-				}
-				
-				builder.append(chars);
-				
-				if (i < buffer.array().length - 1) {
-					builder.append(".");
-				}
-				i--;
+			//no offset
+			else {
+				resultByteBuffer.put(b);
 			}
-			String cname = builder.toString();
-
-			System.out.println("CNAME	" + cname + "	" + TTL + "	" + authorityValue);
 		}
+		
+		return resultByteBuffer;
+	}
+	
+	//retrieve name server from compressed data 
+	public String retrieveCompressedData(byte[] answer, int rDataIndex, int RDLength) {
+		
+		ByteBuffer resultByteBuffer = convertRDataIntoByteBuffer(answer, rDataIndex, RDLength); 
+		
+		StringBuilder resultString = new StringBuilder();
+		for (int j = 0; j < resultByteBuffer.array().length; j++) {
+			//values in compressed form are converted back to domain form
+			char[] values = new char[resultByteBuffer.array()[j++]];
+			
+			for (int k = 0; k < values.length; k++) {
+				values[k] = (char) resultByteBuffer.array()[j++];
+			}
+			
+			resultString.append(values);
+			
+			if (resultByteBuffer.array().length > j + 1) {
+				resultString.append(".");
+			}
+			
+			j -=1; 
+		}
+
+		return resultString.toString();	
 	}
 	
 }

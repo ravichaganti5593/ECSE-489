@@ -17,11 +17,11 @@ public class ClientServerConnection {
 	String DOMAIN = "";
 	byte[] serverIPAddressBytes = new byte[4];
 	
-	DatagramPacket DNSReceivePacket;
-	ByteBuffer headerBuffer;
-	ByteBuffer questionBuffer;
-	ByteBuffer answerBuffer;
-	ByteBuffer packetBuffer;
+	DatagramPacket ReceivedPacket;
+	ByteBuffer headerPacketBuffer;
+	ByteBuffer questionPacketBuffer;
+	ByteBuffer answerPacketBuffer;
+	ByteBuffer totalPacketBuffer;
 	long RTT = 0;
 	int connectionRetries = 0;
 	
@@ -39,17 +39,17 @@ public class ClientServerConnection {
 	public void createSocketConnection() {
 		
 		DNSHeader DNSHeader = new DNSHeader();	
-		headerBuffer = DNSHeader.GetPacketHeader();
+		headerPacketBuffer = DNSHeader.GetPacketHeader();
 		
 		DNSQuestion DNSQuestion = new DNSQuestion(DOMAIN, TYPE);
-		questionBuffer = DNSQuestion.GetQuestion();
+		questionPacketBuffer = DNSQuestion.GetQuestion();
 		
-		answerBuffer = ByteBuffer.allocate(512 - headerBuffer.capacity() - questionBuffer.capacity());
-		packetBuffer = ByteBuffer.allocate(headerBuffer.capacity() + questionBuffer.capacity() + answerBuffer.capacity());
+		answerPacketBuffer = ByteBuffer.allocate(512 - headerPacketBuffer.capacity() - questionPacketBuffer.capacity());
+		totalPacketBuffer = ByteBuffer.allocate(headerPacketBuffer.capacity() + questionPacketBuffer.capacity() + answerPacketBuffer.capacity());
 		
-		packetBuffer.put(headerBuffer.array());
-		packetBuffer.put(questionBuffer.array());
-		packetBuffer.put(answerBuffer.array());
+		totalPacketBuffer.put(headerPacketBuffer.array());
+		totalPacketBuffer.put(questionPacketBuffer.array());
+		totalPacketBuffer.put(answerPacketBuffer.array());
 		
 		InetAddress serverIPAddress = null;
 		
@@ -58,29 +58,30 @@ public class ClientServerConnection {
 		}
 		
 		catch (UnknownHostException exception) {
-			System.out.println("Unknown host error: " + exception);
+			System.out.println("Error: there is an unknown host exception error: " + exception);
 		}
 		
-		DatagramSocket DNSSocket = null;
+		DatagramSocket UDPSocket = null;
 		
 		try {
-			DNSSocket = new DatagramSocket();
-			DNSSocket.setSoTimeout(1000 * TIMEOUT);
+			UDPSocket = new DatagramSocket();
+			UDPSocket.setSoTimeout(1000 * TIMEOUT);
 		}
 		
 		catch (SocketException exception) {
-			System.out.println("Socket exception " + exception);
+			System.out.println("Error: Socket connection failed with exception: " + exception);
 		}
 		
 
-		Exception socketTimeOut = new Exception();
-		DNSReceivePacket = new DatagramPacket(packetBuffer.array(), packetBuffer.array().length);	
-		byte[] sendData = packetBuffer.array();
-		DatagramPacket DNSSendPacket = new DatagramPacket(sendData, sendData.length, serverIPAddress, DNSPORTNUMBER);
 		
+		ReceivedPacket = new DatagramPacket(totalPacketBuffer.array(), totalPacketBuffer.array().length);	
+		byte[] sentTotalPacketArray = totalPacketBuffer.array();
+		DatagramPacket DNSSendPacket = new DatagramPacket(sentTotalPacketArray, sentTotalPacketArray.length, serverIPAddress, DNSPORTNUMBER);
+		
+		Exception timeoutForSocket = new Exception();
 		do {
 			try {
-				DNSSocket.send(DNSSendPacket);
+				UDPSocket.send(DNSSendPacket); 
 			} 
 			
 			catch (IOException exception) {
@@ -88,46 +89,46 @@ public class ClientServerConnection {
 			}
 			
 			try {
-				long startTime = System.currentTimeMillis();
-				DNSSocket.receive(DNSReceivePacket);
-				long endTime = System.currentTimeMillis();
-				RTT = endTime - startTime;
+				long sendingTimeStamp = System.currentTimeMillis();
+				UDPSocket.receive(ReceivedPacket);
+				long receivingTimeStamp = System.currentTimeMillis();
+				RTT = receivingTimeStamp - sendingTimeStamp; 
 			}
 			
 			catch (IOException exception) {
-				socketTimeOut = exception;
+				timeoutForSocket = exception;
 				connectionRetries++;
 				
 				if (connectionRetries == MAXRETRIES) {
-					System.out.println("ERROR: maximum number of retries");
+					System.out.println("ERROR: MAX retries has been reached");
 					System.exit(1);
 				}
 			}	
 		}
 		
-		while (socketTimeOut instanceof SocketTimeoutException && connectionRetries < MAXRETRIES);
+		while (timeoutForSocket instanceof SocketTimeoutException && connectionRetries < MAXRETRIES);
 		
-		DNSSocket.close();
+		UDPSocket.close(); 
 	}
 	
 	public DatagramPacket getDNSReceivePacket() {
-		return DNSReceivePacket;
+		return ReceivedPacket;
 	}
 	
 	public ByteBuffer getHeaderBuffer() {
-		return headerBuffer;
+		return headerPacketBuffer;
 	}
 	
 	public ByteBuffer getQuestionBuffer() {
-		return questionBuffer;
+		return questionPacketBuffer;
 	}
 	
 	public ByteBuffer getAnswerBuffer() {
-		return answerBuffer;
+		return answerPacketBuffer;
 	}
 	
 	public ByteBuffer getPacketBuffer() {
-		return packetBuffer; 
+		return totalPacketBuffer; 
 	}
 	
 	public long getRTT() {

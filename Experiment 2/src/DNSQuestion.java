@@ -7,12 +7,12 @@ public class DNSQuestion {
 	
 	public short QTYPE;
 	public static final short QCLASS = (short) 0x0001;
-	byte[] qname;
+	byte[] QNAME;
 	
 	public ByteBuffer Question;
 	
 	public DNSQuestion (String QNAME, String QTYPE) {
-		this.qname = convertQNAME(QNAME).array();
+		this.QNAME = convertQNAME(QNAME).array();
 		this.QTYPE = checkQTYPE(QTYPE);
 		this.Question = generateQuestion();
 
@@ -20,7 +20,7 @@ public class DNSQuestion {
 	
 	public ByteBuffer convertQNAME(String QNAME) {
 		
-		String[] splitArray = QNAME.split("[.]");
+		String[] splitArray = QNAME.split("\\.");
 		int sizeOfBytes = 0;
 		
 		for (String i: splitArray) {
@@ -71,9 +71,8 @@ public class DNSQuestion {
 	
 	public ByteBuffer generateQuestion() {
 		
-		int sizeOfBuffer = qname.length + 2*Short.BYTES;
-		ByteBuffer resultQuestion = ByteBuffer.allocate(sizeOfBuffer);
-		resultQuestion.put(qname);
+		ByteBuffer resultQuestion = ByteBuffer.allocate(QNAME.length + 2*Short.BYTES);
+		resultQuestion.put(QNAME);
 		resultQuestion.putShort(QTYPE);
 		resultQuestion.putShort(QCLASS);
 
